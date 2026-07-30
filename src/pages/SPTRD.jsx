@@ -90,7 +90,8 @@ export default function SPTRD() {
 
     return () => clearTimeout(debounce);
   }, [keyword]);
-const handleSearch = async (
+
+  const handleSearch = async (
     keywordSearch = keyword,
     pageNumber = 1,
     isLoadMore = false
@@ -110,8 +111,9 @@ const handleSearch = async (
 
       setSearchOpen(true);
 
+      // Ganti URL langsung ke path proxy /api-bapenda/
       const res = await fetch(
-        `https://rpp.bapenda.jatengprov.go.id/penatausahaan/api/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(query)}`,
+        `/bapenda/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(query)}`,
         {
           headers: {
             token: "xV3nKd8QpL5rTyHuWc2MfZaJbE7sRt1",
@@ -121,8 +123,6 @@ const handleSearch = async (
       );
 
       const result = await res.json();
-      
-      // DIUBAH: Menyesuaikan persis dengan Header.jsx (langsung ambil result.data)
       const apiData = result?.data || [];
 
       setHasMore(apiData.length === 20);
@@ -134,13 +134,12 @@ const handleSearch = async (
       }
     } catch (err) {
       console.error("SEARCH ERROR:", err);
-      // Jangan tampilkan Swal error jika user hanya mengetik atau menghapus cepat
-      // Cukup log ke console agar tidak mengganggu UI
     } finally {
       setLoadingSearch(false);
       setIsFetchingMore(false);
     }
   };
+
 
   const loadMore = () => {
     const nextPage = page + 1;
