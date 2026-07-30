@@ -10,20 +10,30 @@ export const AuthProvider = ({ children }) => {
   const [emailVerified, setEmailVerified] = useState(false)
   const [verificationPending, setVerificationPending] = useState(false)
 
-  // Load token & user dari localStorage saat aplikasi pertama kali dimuat
+  // 1. Sinkronkan key localStorage dengan yang digunakan Header (wr_session & wr_user_header)
   useEffect(() => {
     try {
-      const savedToken = localStorage.getItem('authToken')
-      const savedUser = localStorage.getItem('user')
+      const savedSession = localStorage.getItem('wr_session')
+      const savedUser = localStorage.getItem('wr_user_header')
       
-      if (savedToken && savedUser) {
-        setToken(savedToken)
-        setUser(JSON.parse(savedUser))
+      if (savedSession && savedUser) {
+        const sessionData = JSON.parse(savedSession)
+        const userData = JSON.parse(savedUser)
+        
+        // Cek apakah sesi valid / belum expired
+        const now = new Date().getTime()
+        if (sessionData.isLoggedIn && (!sessionData.expiredAt || now < sessionData.expiredAt)) {
+          setToken(sessionData.token || "active_session") // Gunakan token atau penanda sesi aktif
+          setUser(userData)
+        } else {
+          // Hapus jika sudah expired
+          localStorage.removeItem('wr_session')
+          localStorage.removeItem('wr_user_header')
+        }
       }
     } catch (err) {
       console.error("Gagal membaca localStorage:", err)
     } finally {
-      // Pastikan isLoading diset false apapun hasilnya
       setIsLoading(false)
     }
   }, [])
@@ -44,80 +54,22 @@ export const AuthProvider = ({ children }) => {
       const newToken = data.token
       const newUser = data.user
       
-      setToken(newToken)
-      setUser(newUser)
-      localStorage.setItem('authToken', newToken)
-      localStorage.setItem('user', JSON.stringify(newUser))
-      
-      return newUser
-    } catch (err) {
-      setError(err.message)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const register = async (userData) => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      })
-      
-      if (!response.ok) throw new Error('Registration failed')
-      
-      const data = await response.json()
-      const newToken = data.token
-      const newUser = data.user
-      
-      setToken(newToken)
-      setUser(newUser)
-      localStorage.setItem('authToken', newToken)
-      localStorage.setItem('user', JSON.stringify(newUser))
-      
-      return newUser
-    } catch (err) {
-      setError(err.message)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const sendVerificationEmail = async (email) => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      setVerificationPending(true)
-      return { success: true, message: 'Email verifikasi telah dikirim' }
-    } catch (err) {
-      setError(err.message)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const verifyEmail = async (email, code) => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      if (code && code.length === 6) {
-        setEmailVerified(true)
-        setVerificationPending(false)
-        if (user) {
-          const updatedUser = { ...user, emailVerified: true, verifiedAt: new Date().toISOString() }
-          setUser(updatedUser)
-          localStorage.setItem('user', JSON.stringify(updatedUser))
-        }
-        return { success: true, message: 'Email berhasil diverifikasi' }
-      } else {
-        throw new Error('Kode verifikasi tidak valid')
+      // Buat struktur wr_session sesuai dengan gambar storage Anda sebelumnya
+      const sessionPayload = {
+        isLoggedIn: true,
+        loginTime: new Date().getTime(),
+        expiredAt: new Date().getTime() + (24 * 60 * 60 * 1000), // Contoh expired 24 jam
+        token: newToken
       }
+
+      setToken(newToken)
+      setUser(newUser)
+      
+      // Simpan menggunakan key yang seragam di seluruh aplikasi
+      localStorage.setItem('wr_session', JSON.stringify(sessionPayload))
+      localStorage.setItem('wr_user_header', JSON.stringify(newUser))
+      
+      return newUser
     } catch (err) {
       setError(err.message)
       throw err
@@ -131,8 +83,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null)
     setEmailVerified(false)
     setVerificationPending(false)
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('user')
+    localStorage.removeItem('wr_session')
+    localStorage.removeItem('wr_user_header')
   }
 
   const value = {
@@ -143,11 +95,8 @@ export const AuthProvider = ({ children }) => {
     emailVerified,
     verificationPending,
     login,
-    register,
     logout,
-    sendVerificationEmail,
-    verifyEmail,
-    isAuthenticated: !!token,
+    isAuthenticated: !!user || !!token,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
