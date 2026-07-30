@@ -618,7 +618,7 @@ export default function ProductDetail() {
                 </h2>
                 <div className="mt-4">
                   <p className="font-semibold">
-                    ID Barang / Jasa : {product.id}
+                    ID Barang / Jasa : {product.id_gen_obyek}
                   </p>
                 </div>
                 <div>

@@ -321,15 +321,7 @@ export default function SPTRD() {
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute top-3 left-3 flex gap-2">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                              item.status === 1
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {item.status === 1 ? "Aktif" : "Tidak Aktif"}
-                          </span>
+                          
                           {item.is_laku ? (
                             <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
                               Tersewa
@@ -473,7 +465,7 @@ export default function SPTRD() {
                       <div className="space-y-3 text-sm">
                         <div>
                           <p className="text-gray-500 text-xs">ID Barang / Jasa</p>
-                          <p className="font-semibold text-slate-800">{selectedObyek.id}</p>
+                          <p className="font-semibold text-slate-800">{selectedObyek.id_gen_obyek}</p>
                         </div>
                         <div>
                           <p className="text-gray-500 text-xs">Jenis Retribusi</p>
