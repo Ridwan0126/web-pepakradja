@@ -14,6 +14,10 @@ import {
   User,
   ArrowRight,
   Wallet,
+  Share2,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import Swal from "sweetalert2";
@@ -25,10 +29,9 @@ import Footer from "../components/Footer";
 export default function SPTRD() {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [loadingCreate, setLoadingCreate] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // SEARCH STATES (Mengikuti Header.jsx)
+  // SEARCH STATES
   const searchRef = useRef(null);
   const [keyword, setKeyword] = useState("");
   const [lastSearch, setLastSearch] = useState("");
@@ -37,10 +40,14 @@ export default function SPTRD() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
+  // DETAIL & PREVIEW STATES (Menyamakan ProductDetail.jsx)
   const [selectedObyek, setSelectedObyek] = useState(null);
+  const [activeImage, setActiveImage] = useState(0);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [formData, setFormData] = useState({});
-  const [activeImage, setActiveImage] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   const session =
     typeof window !== "undefined"
@@ -57,23 +64,6 @@ export default function SPTRD() {
       month: "long",
       year: "numeric",
     }).format(new Date(date));
-
-  const today = formatDate(new Date());
-
-  // =========================
-  // CLICK OUTSIDE SEARCH PANEL
-  // =========================
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setSearchOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   // =========================
   // AUTO SEARCH (DEBOUNCE 500ms)
@@ -111,7 +101,6 @@ export default function SPTRD() {
 
       setSearchOpen(true);
 
-      // Ganti URL langsung ke path proxy /api-bapenda/
       const res = await fetch(
         `/bapenda/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(query)}`,
         {
@@ -140,7 +129,6 @@ export default function SPTRD() {
     }
   };
 
-
   const loadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -150,46 +138,67 @@ export default function SPTRD() {
   const getAllPhotos = (item) => {
     const photos = [];
     if (item?.foto) photos.push(item.foto);
-    if (item?.foto2) photos.push(item.foto2);
-    if (item?.foto3) photos.push(item.foto3);
-    if (item?.foto4) photos.push(item.foto4);
-    return [...new Set(photos)];
+    if (item?.foto_2) photos.push(item.foto_2);
+    if (item?.foto_3) photos.push(item.foto_3);
+    if (item?.foto_4) photos.push(item.foto_4);
+    return photos.filter(Boolean).map((p) =>
+      p.startsWith("http")
+        ? p
+        : `https://rpp.bapenda.jatengprov.go.id/penatausahaan/storage/${p}`
+    );
   };
 
-  const handlePreviewSPTRD = (obyekData) => {
-    const targetObyek = obyekData || selectedObyek;
-    if (!targetObyek) {
-      Swal.fire(
-        "Pilih Obyek",
-        "Silakan pilih obyek retribusi terlebih dahulu",
-        "warning"
-      );
+  const handlePreviewSPTRD = (targetObyek) => {
+    if (!targetObyek) return;
+
+    if (targetObyek?.is_laku) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Obyek retribusi ini sudah disewa/digunakan.",
+        confirmButtonColor: "#d33",
+      });
+      return;
+    }
+
+    if (!wr?.nama) {
+      Swal.fire({
+        icon: "warning",
+        title: "Belum Login",
+        text: "Silakan login terlebih dahulu untuk membuat SPTRD.",
+        confirmButtonText: "Login",
+        confirmButtonColor: "#3085d6",
+      });
       return;
     }
 
     setFormData({
-      nomor: `SPTRD/${new Date().getTime()}`,
+      nomor: `SPTRD-${Date.now()}`,
       tanggal: formatDate(new Date()),
-      nama: wr.nama || "-",
-      alamat: wr.alamat || "-",
-      nik: wr.nik_npwp || "-",
-      npwrd: wr.npwrd || "-",
-      telepon: wr.telepon || "-",
-      email: wr.email || "-",
+      nama: wr?.nama || "-",
+      alamat: wr?.alamat || "-",
+      nik: wr?.nik_npwp || "-",
+      npwrd: wr?.npwrd || "-",
+      telepon: wr?.telepon || "-",
+      email: wr?.email || "-",
+      jenis: targetObyek?.golongan?.golongan || "Jasa",
+      rincian: targetObyek?.obyek_retribusi || "Sewa",
       pelayanan:
         targetObyek?.jenis?.jenis_retribusi ||
         targetObyek?.tariftbl?.penerimaan ||
         "-",
       obyek: targetObyek?.obyek_retribusi || "-",
       lokasi: targetObyek?.alamat || "-",
-      keterangan:
-        targetObyek?.keterangan || targetObyek?.judul_penawaran || "-",
+      keterangan: targetObyek?.keterangan || "-",
       opd: targetObyek?.opd?.nama || "-",
       uppd: targetObyek?.uppd?.nama || "-",
       tarif: targetObyek?.tariftbl?.tarif || 0,
       satuan: targetObyek?.tariftbl?.satuan?.satuan || "-",
       kota: targetObyek?.kota?.kab_kota || "JAWA TENGAH",
-      qr: `SPTRD-${targetObyek.id}`,
+      qr: JSON.stringify({
+        wr: wr?.npwrd,
+        obyek: targetObyek?.id,
+      }),
     });
 
     setShowPreviewModal(true);
@@ -226,13 +235,13 @@ export default function SPTRD() {
             Surat Pemberitahuan Retribusi Daerah (SPTRD)
           </h1>
           <p className="opacity-90">
-            Cari dan pilih objek retribusi di bawah ini untuk membuat SPTRD
-            secara instan dan diajukan ke OPD terkait.
+            Cari dan pilih objek retribusi di bawah ini untuk melihat detail lengkap
+            dan membuat SPTRD secara instan.
           </p>
         </div>
 
-        {/* SEARCH BAR SECTION (Mengadopsi struktur Header.jsx) */}
-        <div ref={searchRef} className="relative bg-white rounded-3xl shadow-xl p-6 mb-8">
+        {/* SEARCH BAR SECTION */}
+        <div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 relative">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
@@ -240,9 +249,6 @@ export default function SPTRD() {
                 type="text"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                onFocus={() => {
-                  if (keyword.trim()) setSearchOpen(true);
-                }}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch(keyword, 1, false)}
                 placeholder="Cari nama obyek retribusi atau alamat..."
                 className="w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100/80 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
@@ -270,202 +276,309 @@ export default function SPTRD() {
               {loadingSearch ? "Memuat..." : "Cari Objek"}
             </button>
           </div>
+        </div>
 
-          {/* DROPDOWN / FLOATING RESULT PANEL (Persis seperti Header.jsx) */}
-          <AnimatePresence>
-            {searchOpen && keyword.trim() && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.99 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.99 }}
-                transition={{ duration: 0.2 }}
-                className="absolute left-0 right-0 mt-3 z-50 px-6"
-              >
-                <div className="rounded-[28px] border border-white/80 bg-white/90 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden max-h-[450px]">
-                  <div className="px-5 py-4 border-b border-gray-200/40 bg-white/50 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-sm font-black text-slate-900 tracking-tight">
-                        Hasil Pencarian Objek Retribusi
-                      </h2>
-                      <p className="text-[11px] text-slate-500 font-bold uppercase mt-0.5">
-                        {obyekList.length} Data Ditemukan
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setSearchOpen(false)}
-                      className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center"
+        {/* SECTION HASIL PENCARIAN BERBENTUK CARD DI BAWAH (BUKAN DROPDOWN) */}
+        {searchOpen && keyword.trim() && (
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-4 px-2">
+              <h2 className="text-lg font-bold text-slate-900">
+                Hasil Pencarian Objek Retribusi
+              </h2>
+              <span className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
+                {obyekList.length} Data Ditemukan
+              </span>
+            </div>
+
+            {loadingSearch ? (
+              <div className="bg-white rounded-3xl p-12 text-center text-slate-500 shadow-md">
+                Sedang mencari data objek retribusi...
+              </div>
+            ) : obyekList.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center text-slate-500 shadow-md">
+                Tidak ada objek retribusi yang cocok dengan kata kunci "{keyword}".
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {obyekList.map((item, index) => {
+                  const photos = getAllPhotos(item);
+                  const mainPhoto = photos[0] || "/images/logopepakraja.png";
+                  return (
+                    <motion.div
+                      key={`${item.id}-${index}`}
+                      whileHover={{ y: -4 }}
+                      onClick={() => {
+                        setSelectedObyek(item);
+                        setActiveImage(0);
+                        setShowDetailModal(true);
+                      }}
+                      className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
                     >
-                      <X className="w-4 h-4 text-slate-700" />
-                    </button>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                    {loadingSearch ? (
-                      <div className="py-10 text-center text-xs text-slate-500 font-bold">
-                        Sedang mencari data...
+                      <div className="relative h-48 bg-slate-100 overflow-hidden">
+                        <img
+                          src={mainPhoto}
+                          alt={item.obyek_retribusi}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-3 left-3 flex gap-2">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              item.status === 1
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {item.status === 1 ? "Aktif" : "Tidak Aktif"}
+                          </span>
+                          {item.is_laku ? (
+                            <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                              Tersewa
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                              Tersedia
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    ) : obyekList.length === 0 ? (
-                      <div className="py-10 text-center">
-                        <p className="text-slate-500 font-medium text-xs">
-                          Tidak ada objek retribusi yang cocok.
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {obyekList.map((item, index) => {
-                            const photo = getAllPhotos(item)[0];
-                            return (
-                              <motion.div
-                                key={`${item.id}-${index}`}
-                                whileHover={{ y: -2, scale: 1.01 }}
-                                onClick={() => {
-                                  setSelectedObyek(item);
-                                  setActiveImage(photo);
-                                  setSearchOpen(false);
-                                  setShowDetailModal(true);
-                                }}
-                                className="flex items-center gap-3.5 p-3 rounded-2xl border border-gray-200/80 bg-white hover:bg-blue-50/40 hover:border-blue-500/40 shadow-sm transition-all cursor-pointer"
-                              >
-                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 border border-gray-200 flex-shrink-0">
-                                  {photo ? (
-                                    <img
-                                      src={`https://rpp.bapenda.jatengprov.go.id/penatausahaan/storage/${photo}`}
-                                      alt="foto"
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
-                                      <Building2 className="w-5 h-5 text-white" />
-                                    </div>
-                                  )}
-                                </div>
 
-                                <div className="min-w-0 flex-1">
-                                  <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">
-                                    {item?.obyek_retribusi}
-                                  </h3>
-                                  <p className="text-[10px] text-blue-600 font-bold truncate uppercase mt-0.5">
-                                    {item?.opd?.nama || "-"}
-                                  </p>
-                                  <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-600 font-medium">
-                                    <div className="flex items-center gap-0.5 truncate max-w-[50%]">
-                                      <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                                      <span className="truncate">
-                                        {item?.kota?.kab_kota || "-"}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-0.5 text-emerald-600 font-bold flex-shrink-0">
-                                      <Wallet className="w-3 h-3 text-emerald-500" />
-                                      Rp {rupiah(item?.tariftbl?.tarif)}
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            );
-                          })}
+                      <div className="p-5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <p className="text-xs text-blue-600 font-bold uppercase mb-1">
+                            {item?.opd?.nama || "-"}
+                          </p>
+                          <h3 className="font-bold text-slate-900 text-base line-clamp-2 mb-2">
+                            {item.obyek_retribusi}
+                          </h3>
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-4">
+                            <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                            <span className="truncate">{item.alamat || "-"}</span>
+                          </div>
                         </div>
 
-                        {hasMore && (
-                          <div className="p-3 text-center">
-                            <button
-                              onClick={loadMore}
-                              disabled={isFetchingMore}
-                              className="px-6 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all disabled:opacity-50"
-                            >
-                              {isFetchingMore ? "Memuat..." : "Tampilkan Lebih Banyak"}
-                            </button>
+                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] text-gray-400 block">Tarif</span>
+                            <span className="text-sm font-bold text-green-600">
+                              Rp {rupiah(item?.tariftbl?.tarif)} / {item?.tariftbl?.satuan?.satuan || "Unit"}
+                            </span>
                           </div>
+                          <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <ArrowRight size={16} />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+
+            {hasMore && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={loadMore}
+                  disabled={isFetchingMore}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all disabled:opacity-50 shadow-md"
+                >
+                  {isFetchingMore ? "Memuat..." : "Tampilkan Lebih Banyak"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* DETAIL MODAL (INFORMASI LENGKAP SAMA SEPERTI PRODUCT DETAIL) */}
+        {showDetailModal && selectedObyek && (() => {
+          const images = getAllPhotos(selectedObyek);
+          const finalImages = images.length > 0 ? images : ["/images/logopepakraja.png"];
+          
+          let lat = null;
+          let lng = null;
+          if (typeof selectedObyek?.lat_long === "string" && selectedObyek.lat_long.includes(",")) {
+            const split = selectedObyek.lat_long.split(",").map((v) => v.trim());
+            lat = parseFloat(split[0]);
+            lng = parseFloat(split[1]);
+          }
+
+          return (
+            <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 z-20 bg-white border-b px-6 py-4 flex justify-between items-center">
+                  <h2 className="text-xl font-bold text-slate-900">Detail Lengkap Obyek Retribusi</h2>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* SLIDER GAMBAR */}
+                  <div className="relative w-full h-[320px] md:h-[400px] rounded-2xl overflow-hidden bg-slate-900 group">
+                    {finalImages.length > 1 && (
+                      <>
+                        {activeImage > 0 && (
+                          <button
+                            onClick={() => setActiveImage((prev) => prev - 1)}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/50 text-white rounded-full hover:bg-black/75 transition-all"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
+                        )}
+                        {activeImage < finalImages.length - 1 && (
+                          <button
+                            onClick={() => setActiveImage((prev) => prev + 1)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/50 text-white rounded-full hover:bg-black/75 transition-all"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
                         )}
                       </>
                     )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* DETAIL MODAL */}
-        {showDetailModal && selectedObyek && (
-          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full overflow-hidden">
-              <div className="bg-blue-700 text-white p-5 flex justify-between items-center">
-                <h2 className="text-xl font-bold">Detail Obyek Retribusi</h2>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="hover:bg-white/20 p-2 rounded-lg"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="p-6 max-h-[70vh] overflow-y-auto">
-                <div className="grid md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">ID Obyek</label>
-                    <p className="font-medium text-slate-800">{selectedObyek.id}</p>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">Jenis Retribusi</label>
-                    <p className="font-medium text-slate-800">{selectedObyek?.jenis?.jenis_retribusi}</p>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">Obyek Retribusi</label>
-                    <p className="font-medium text-slate-800">{selectedObyek.obyek_retribusi}</p>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">Tarif</label>
-                    <p className="text-green-600 font-bold">Rp {rupiah(selectedObyek?.tariftbl?.tarif)}</p>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">Lokasi</label>
-                    <p className="font-medium text-slate-800">{selectedObyek.alamat}</p>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">Satuan</label>
-                    <p className="font-medium text-slate-800">{selectedObyek?.tariftbl?.satuan?.satuan || "-"}</p>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">OPD</label>
-                    <p className="font-medium text-slate-800">{selectedObyek?.opd?.nama}</p>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-gray-500 text-xs">UPPD</label>
-                    <p className="font-medium text-slate-800">{selectedObyek?.uppd?.nama}</p>
-                  </div>
-                </div>
-
-                {selectedObyek.keterangan && (
-                  <div className="mt-6">
-                    <label className="font-semibold text-gray-500 text-xs">Keterangan</label>
-                    <div className="bg-gray-50 p-4 rounded-xl mt-1 text-sm text-slate-700">
-                      {selectedObyek.keterangan}
+                    <img
+                      src={finalImages[activeImage]}
+                      alt="Detail Obyek"
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                      <h1 className="text-xl md:text-2xl font-bold text-white">
+                        {selectedObyek.obyek_retribusi}
+                      </h1>
                     </div>
                   </div>
-                )}
-              </div>
 
-              <div className="border-t p-5 flex justify-end gap-3 bg-gray-50">
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-xl text-sm font-semibold"
-                >
-                  Tutup
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    handlePreviewSPTRD(selectedObyek);
-                  }}
-                  className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2"
-                >
-                  Buat SPTRD <ArrowRight size={16} />
-                </button>
+                  {/* THUMBNAILS */}
+                  {finalImages.length > 1 && (
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                      {finalImages.map((img, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveImage(idx)}
+                          className={`w-16 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${
+                            activeImage === idx ? "border-blue-600 scale-105" : "border-transparent opacity-60"
+                          }`}
+                        >
+                          <img src={img} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* INFO GRID */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
+                      <h3 className="font-bold text-slate-800 text-base border-b pb-2">Informasi Umum</h3>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="text-gray-500 text-xs">ID Barang / Jasa</p>
+                          <p className="font-semibold text-slate-800">{selectedObyek.id}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs">Jenis Retribusi</p>
+                          <p className="font-semibold text-slate-800">{selectedObyek?.jenis?.jenis_retribusi || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs">Keterangan / Judul Penawaran</p>
+                          <p className="font-semibold text-slate-800">{selectedObyek.keterangan || selectedObyek.judul_penawaran || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs">Status Ketersediaan</p>
+                          <div className="flex gap-2 mt-1">
+                            {selectedObyek.is_laku ? (
+                              <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">Tersewa</span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">Tersedia</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
+                      <h3 className="font-bold text-slate-800 text-base border-b pb-2">Tarif & Lokasi</h3>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <p className="text-gray-500 text-xs">Tarif Retribusi</p>
+                          <p className="font-bold text-green-600 text-lg">
+                            Rp {rupiah(selectedObyek?.tariftbl?.tarif)} <span className="text-xs font-normal text-slate-600">/ {selectedObyek?.tariftbl?.satuan?.satuan || "-"}</span>
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs">Alamat Lokasi</p>
+                          <p className="font-semibold text-slate-800">{selectedObyek.alamat || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs">Wilayah</p>
+                          <p className="font-semibold text-slate-800">
+                            Kec. {selectedObyek?.kecamatan?.kecamatan || "-"}, Kab/Kota {selectedObyek?.kota?.kab_kota || "-"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* INSTANSI PENGELOLA */}
+                  <div className="bg-blue-50/60 rounded-2xl p-5 border border-blue-100">
+                    <h3 className="font-bold text-slate-800 text-base mb-3">Instansi Pengelola</h3>
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500 text-xs">OPD</p>
+                        <p className="font-semibold text-slate-800">{selectedObyek?.opd?.nama || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">UPPD / Balai</p>
+                        <p className="font-semibold text-slate-800">{selectedObyek?.uppd?.nama || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">Kontak Pengelola</p>
+                        <p className="font-semibold text-green-600">{selectedObyek?.no_wa_pengelola || selectedObyek?.no_telp_pengelola || "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* GOOGLE MAPS */}
+                  {lat && lng && (
+                    <div className="bg-gray-50 rounded-2xl p-5">
+                      <h3 className="font-bold text-slate-800 text-base mb-3 flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-green-600" /> Lokasi Peta
+                      </h3>
+                      <iframe
+                        src={`https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`}
+                        className="w-full h-56 rounded-xl border"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="sticky bottom-0 z-20 border-t p-5 bg-white flex justify-end gap-3 shadow-lg">
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-xl text-sm font-semibold transition-all"
+                  >
+                    Tutup
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      handlePreviewSPTRD(selectedObyek);
+                    }}
+                    disabled={selectedObyek?.is_laku}
+                    className={`px-8 py-3 rounded-xl text-sm font-bold text-white transition-all shadow-lg flex items-center gap-2 ${
+                      selectedObyek?.is_laku
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-green-600 to-teal-500 hover:scale-105"
+                    }`}
+                  >
+                    {selectedObyek?.is_laku ? "Obyek Tersewa" : "Buat SPTRD Sekarang"} <ArrowRight size={16} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* MODAL PREVIEW SPTRD */}
         {showPreviewModal && (
