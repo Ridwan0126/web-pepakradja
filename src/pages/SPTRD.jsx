@@ -114,6 +114,7 @@ export default function SPTRD() {
 
       setSearchOpen(true);
 
+      // PERBAIKAN: Gunakan URL absolut yang sama seperti di Header.jsx
       const res = await fetch(
         `https://rpp.bapenda.jatengprov.go.id/penatausahaan/api/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(query)}`,
         {
