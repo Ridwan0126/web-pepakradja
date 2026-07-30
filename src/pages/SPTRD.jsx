@@ -90,11 +90,7 @@ export default function SPTRD() {
 
     return () => clearTimeout(debounce);
   }, [keyword]);
-
-  // =========================
-  // SEARCH API (Mirip Header.jsx)
-  // =========================
-  const handleSearch = async (
+const handleSearch = async (
     keywordSearch = keyword,
     pageNumber = 1,
     isLoadMore = false
@@ -114,7 +110,6 @@ export default function SPTRD() {
 
       setSearchOpen(true);
 
-      // PERBAIKAN: Gunakan URL absolut yang sama seperti di Header.jsx
       const res = await fetch(
         `https://rpp.bapenda.jatengprov.go.id/penatausahaan/api/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(query)}`,
         {
@@ -126,6 +121,8 @@ export default function SPTRD() {
       );
 
       const result = await res.json();
+      
+      // DIUBAH: Menyesuaikan persis dengan Header.jsx (langsung ambil result.data)
       const apiData = result?.data || [];
 
       setHasMore(apiData.length === 20);
@@ -137,7 +134,8 @@ export default function SPTRD() {
       }
     } catch (err) {
       console.error("SEARCH ERROR:", err);
-      Swal.fire("Error", "Gagal mengambil data obyek", "error");
+      // Jangan tampilkan Swal error jika user hanya mengetik atau menghapus cepat
+      // Cukup log ke console agar tidak mengganggu UI
     } finally {
       setLoadingSearch(false);
       setIsFetchingMore(false);
