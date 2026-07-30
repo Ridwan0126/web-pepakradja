@@ -39,13 +39,18 @@ function App() {
 
   const handleSplashFinish = () => {
     sessionStorage.setItem("splashShown", "true");
+    setShowSplash(false);
   };
 
   return (
     <>
       {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-      <Router>
-        <AuthProvider>
+      {/* 
+        PENTING: AuthProvider harus membungkus Router 
+        agar PrivateRoute (yang ada di dalam Routes) bisa mengakses useAuth() 
+      */}
+      <AuthProvider>
+        <Router>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -105,11 +110,10 @@ function App() {
               }
             />
 
-            {/* ... (Daftar route dashboard admin/user lainnya) */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
-      </Router>
+        </Router>
+      </AuthProvider>
     </>
   );
 }
