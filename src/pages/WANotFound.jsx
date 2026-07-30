@@ -15,7 +15,7 @@ const NotFound = () => {
     <div
       className="min-h-screen flex flex-col md:flex-row relative overflow-hidden"
       style={{
-        backgroundImage: "url('/images/suwun.png')",
+        backgroundImage: "url('/images/bgwa.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
