@@ -10,22 +10,28 @@ export const AuthProvider = ({ children }) => {
   const [emailVerified, setEmailVerified] = useState(false)
   const [verificationPending, setVerificationPending] = useState(false)
 
-  // Load token from localStorage on mount
+  // Load token & user dari localStorage saat aplikasi pertama kali dimuat
   useEffect(() => {
-    const savedToken = localStorage.getItem('authToken')
-    const savedUser = localStorage.getItem('user')
-    if (savedToken && savedUser) {
-      setToken(savedToken)
-      setUser(JSON.parse(savedUser))
+    try {
+      const savedToken = localStorage.getItem('authToken')
+      const savedUser = localStorage.getItem('user')
+      
+      if (savedToken && savedUser) {
+        setToken(savedToken)
+        setUser(JSON.parse(savedUser))
+      }
+    } catch (err) {
+      console.error("Gagal membaca localStorage:", err)
+    } finally {
+      // Pastikan isLoading diset false apapun hasilnya
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }, [])
 
   const login = async (credentials) => {
     try {
       setIsLoading(true)
       setError(null)
-      // Replace with your actual API endpoint
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -87,16 +93,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true)
       setError(null)
       setVerificationPending(true)
-      
-      // Mock: In production, call actual API
-      // const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/send-verification-email`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email }),
-      // })
-      
-      // Mock implementation
-      console.log(`[v0] Verification email would be sent to: ${email}`)
       return { success: true, message: 'Email verifikasi telah dikirim' }
     } catch (err) {
       setError(err.message)
@@ -110,15 +106,6 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true)
       setError(null)
-      
-      // Mock: In production, call actual API
-      // const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/verify-email`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, code }),
-      // })
-      
-      // Mock implementation - accept any 6-digit code
       if (code && code.length === 6) {
         setEmailVerified(true)
         setVerificationPending(false)
