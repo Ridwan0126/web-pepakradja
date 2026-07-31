@@ -235,8 +235,7 @@ export default function SPTRD() {
             Surat Pemberitahuan Retribusi Daerah (SPTRD)
           </h1>
           <p className="opacity-90">
-            Cari dan pilih objek retribusi di bawah ini untuk melihat detail lengkap
-            dan membuat SPTRD secara instan.
+            Cari / tentukan obyek / layanan terlebih dahulu untuk mengajukan permohonan / SPTRD.
           </p>
         </div>
 
