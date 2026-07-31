@@ -268,7 +268,7 @@ export default function Footer() {
       {/* Pastikan kode ini ada di bagian bawah Footer.js */}
       <div className="fixed bottom-6 right-6 z-50 hidden-on-home">
         <a
-          href="https://wa.me/6285642312609"
+          href="https://wa.me/6287894600111"
           target="_blank"
           rel="noopener noreferrer"
           className="block hover:scale-110 transition-transform duration-300"
