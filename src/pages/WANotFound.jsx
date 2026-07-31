@@ -67,7 +67,6 @@ const NotFound = () => {
           >
             Lain Kali
           </motion.a>
-          //sasaxnoicneoin
           <motion.a
             href={`https://wa.me/6287894600111?text=${encodeURIComponent(
               `Halo PIC Pepak Radja, saya berminat dan ingin mendapatkan informasi terkait layanan/jasa ${namaObyek} dengan ID : ${idAset}, namun nomor WhatsApp pengelola tidak tercantum di Aplikasi Pepak Radja. Mohon bantuannya, terima kasih.`,
