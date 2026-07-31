@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   FileText,
   Download,
@@ -10,11 +11,22 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext"; // Import useAuth
 
 export default function QuickServices() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth(); // Ambil status login dari AuthContext yang valid
+  
+  // Cek status login langsung dari localStorage "wr_session"
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const session =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("wr_session")) || {}
+        : {};
+    // Dianggap login jika ada data user dan nama/npwrd-nya tersedia
+    const isLogged = Boolean(session?.user?.nama || session?.user?.npwrd || session?.token);
+    setIsAuthenticated(isLogged);
+  }, []);
 
   const handleServiceClick = (service, e) => {
     if (service.status === "coming") {
@@ -44,7 +56,7 @@ export default function QuickServices() {
     {
       id: 3,
       icon: Receipt,
-      title: "Perjanjian",
+      title: "Permohonan / SPTRD Online",
       count: "Tersedia",
       color: "from-pink-500 to-rose-500",
       status: "active",
@@ -79,7 +91,6 @@ export default function QuickServices() {
           const Icon = service.icon;
           const isActive = service.status === "active";
           const isComing = service.status === "coming";
-          // Gunakan isAuthenticated yang sinkron dengan AuthContext
           const isLocked = service.requireLogin && !isAuthenticated;
 
           return (
