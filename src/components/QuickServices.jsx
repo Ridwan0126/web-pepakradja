@@ -14,25 +14,21 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function QuickServices() {
   const navigate = useNavigate();
-  const { isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
-  // Fungsi untuk mengecek status login secara langsung dari localStorage (paling aman & akurat)
-  const checkIsLoggedIn = () => {
+  // VALIDASI GANDA: Mengecek langsung ke localStorage agar tidak bergantung 
+  // pada jeda sinkronisasi state AuthContext
+  const checkUserSession = () => {
     try {
       const session = localStorage.getItem("wr_session");
       const userHeader = localStorage.getItem("wr_user_header");
-      
-      // Jika salah satu data penyimpanan lokal ada, anggap user sudah login
-      if (session || userHeader) {
-        return true;
-      }
-      return false;
+      return Boolean(isAuthenticated || session || userHeader);
     } catch (e) {
-      return false;
+      return Boolean(isAuthenticated);
     }
   };
 
-  const isUserLoggedIn = checkIsLoggedIn();
+  const hasActiveSession = checkUserSession();
 
   const handleServiceClick = (service) => {
     if (service.status === "coming") {
@@ -41,8 +37,8 @@ export default function QuickServices() {
 
     if (isLoading) return;
 
-    // Jika layanan butuh login tapi user terdeteksi belum ada session/header
-    if (service.requireLogin && !isUserLoggedIn) {
+    // Jika layanan butuh login dan sesi benar-benar tidak ditemukan di localStorage maupun Context
+    if (service.requireLogin && !hasActiveSession) {
       Swal.fire({
         icon: "warning",
         title: "Anda perlu Masuk",
@@ -56,7 +52,7 @@ export default function QuickServices() {
         }
       });
     } else {
-      // Langsung arahkan ke link tujuan (misal: /sptrd atau /skrd)
+      // Langsung navigasi ke halaman tujuan (/sptrd atau /skrd) karena user sudah terbukti login
       navigate(service.link);
     }
   };
@@ -100,7 +96,7 @@ export default function QuickServices() {
           const Icon = service.icon;
           const isActive = service.status === "active";
           const isComing = service.status === "coming";
-          const isLocked = service.requireLogin && !isUserLoggedIn;
+          const isLocked = service.requireLogin && !hasActiveSession;
 
           return (
             <div
