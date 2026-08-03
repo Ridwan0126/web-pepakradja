@@ -79,16 +79,18 @@ export default function Login() {
         // waktu login
         const loginTime = Date.now();
 
-        // expired 1 jam
-        const expiredAt = loginTime + 60 * 60 * 1000;
+        // expired 24 jam (sesuaikan kebutuhan)
+        const expiredAt = loginTime + 24 * 60 * 60 * 1000;
+
+        // Ambil token jika ada dari API, atau berikan penanda aktif
+        const activeToken = result.data.token || "active_session";
 
         // session user
         const sessionData = {
           isLoggedIn: true,
-
           loginTime,
           expiredAt,
-
+          token: activeToken, // <--- INI KUNCI UTAMANYA AGAR AUTH CONTEXT TERBACA
           user: {
             id: result.data.id,
             nama: result.data.nama,
@@ -100,7 +102,6 @@ export default function Login() {
             dokumen: result.data.dokumen,
             kelurahan: result.data.kelurahan,
             status: result.data.status,
-
             kota: result.data.kota,
             provinsi: result.data.provinsi,
           },
@@ -119,10 +120,10 @@ export default function Login() {
           }),
         );
 
-        // redirect
+        // redirect mulus menggunakan window.location.href agar AuthContext langsung mendeteksi sesi aktif
         setTimeout(() => {
-          navigate("/");
-        }, 1500);
+          window.location.href = "/";
+        }, 1000);
       } else {
         setError(result.message || "NPWRD atau password salah");
       }
