@@ -18,31 +18,39 @@ export default function QuickServices() {
   // Cek status login langsung dari localStorage "wr_session"
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    const rawSession = localStorage.getItem("wr_session");
-    if (rawSession) {
-      try {
-        const session = JSON.parse(rawSession);
-        
-        // DEBUG: Cek isi session di Console Browser (F12)
-        console.log("Data Session:", session);
-
-        // SESUAIKAN KONDISI INI DENGAN STRUKTUR JSON DI LOCALSTORAGE ANDA
-        // Contoh jika token atau data user disimpan langsung di root objek:
-        const isLogged = Boolean(
-          session?.user?.nama || 
-          session?.user?.npwrd || 
-          session?.token || 
-          session?.nama || // Tambahkan ini jika nama disimpan di luar objek user
-          session?.npwrd   // Tambahkan ini jika npwrd disimpan di luar objek user
-        );
-
-        setIsAuthenticated(isLogged);
-      } catch (error) {
-        console.error("Gagal parsing wr_session:", error);
+  const checkAuth = () => {
+    try {
+      const rawSession = localStorage.getItem("wr_session");
+      if (!rawSession) {
         setIsAuthenticated(false);
+        return;
       }
+      
+      const session = JSON.parse(rawSession);
+      
+      // Validasi berdasarkan struktur data yang dikirim oleh Login.jsx
+      const isValidTime = session?.expiredAt ? Date.now() < session.expiredAt : true;
+      const isLogged = Boolean(
+        session?.isLoggedIn && 
+        isValidTime && 
+        (session?.user?.nama || session?.user?.npwrd || session?.user?.id)
+      );
+
+      setIsAuthenticated(isLogged);
+    } catch (error) {
+      console.error("Gagal parsing wr_session:", error);
+      setIsAuthenticated(false);
     }
+  };
+
+  useEffect(() => {
+    checkAuth();
+    
+    // Opsional: mendengarkan perubahan storage jika login dari tab lain
+    window.addEventListener("storage", checkAuth);
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+    };
   }, []);
 
   const handleServiceClick = (service, e) => {
@@ -51,7 +59,17 @@ export default function QuickServices() {
       return;
     }
 
-    if (service.requireLogin && !isAuthenticated) {
+    // Pengecekan ulang secara langsung saat klik untuk menghindari stale state
+    const rawSession = localStorage.getItem("wr_session");
+    const session = rawSession ? JSON.parse(rawSession) : {};
+    const isValidTime = session?.expiredAt ? Date.now() < session.expiredAt : true;
+    const currentIsLogged = Boolean(
+      session?.isLoggedIn && 
+      isValidTime && 
+      (session?.user?.nama || session?.user?.npwrd || session?.user?.id)
+    );
+
+    if (service.requireLogin && !currentIsLogged) {
       e.preventDefault();
 
       Swal.fire({
@@ -108,7 +126,13 @@ export default function QuickServices() {
           const Icon = service.icon;
           const isActive = service.status === "active";
           const isComing = service.status === "coming";
-          const isLocked = service.requireLogin && !isAuthenticated;
+          
+          // Validasi langsung secara live untuk UI lock
+          const rawSession = typeof window !== "undefined" ? localStorage.getItem("wr_session") : null;
+          const session = rawSession ? JSON.parse(rawSession) : {};
+          const isValidTime = session?.expiredAt ? Date.now() < session.expiredAt : true;
+          const liveAuth = Boolean(session?.isLoggedIn && isValidTime && (session?.user?.nama || session?.user?.npwrd || session?.user?.id));
+          const isLocked = service.requireLogin && !liveAuth;
 
           return (
             <Link
