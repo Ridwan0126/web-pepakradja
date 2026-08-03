@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   FileText,
   Download,
@@ -11,51 +10,21 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function QuickServices() {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const checkAuth = () => {
-    try {
-      const rawSession = localStorage.getItem("wr_session");
-      if (!rawSession) {
-        setIsAuthenticated(false);
-        return;
-      }
-      
-      const session = JSON.parse(rawSession);
-      const isLogged = Boolean(session?.isLoggedIn === true && session?.user?.id);
-      setIsAuthenticated(isLogged);
-    } catch (error) {
-      console.error("Gagal parsing wr_session:", error);
-      setIsAuthenticated(false);
-    }
-  };
-
-  useEffect(() => {
-    checkAuth();
-    window.addEventListener("storage", checkAuth);
-    return () => {
-      window.removeEventListener("storage", checkAuth);
-    };
-  }, []);
+  const { isAuthenticated, isLoading } = useAuth();
 
   const handleServiceClick = (service) => {
     if (service.status === "coming") {
       return;
     }
 
-    console.log(session);
-console.log("LOGIN ?", session?.isLoggedIn);
-console.log("USER ID ?", session?.user?.id);
+    // Tunggu sebentar jika AuthContext masih dalam proses loading awal
+    if (isLoading) return;
 
-    // Pengecekan langsung secara live saat tombol diklik
-    const rawSession = localStorage.getItem("wr_session");
-    const session = rawSession ? JSON.parse(rawSession) : {};
-    const currentIsLogged = Boolean(session?.isLoggedIn === true && session?.user?.id);
-
-    if (service.requireLogin && !currentIsLogged) {
+    if (service.requireLogin && !isAuthenticated) {
       Swal.fire({
         icon: "warning",
         title: "Anda perlu Masuk",
@@ -112,11 +81,7 @@ console.log("USER ID ?", session?.user?.id);
           const Icon = service.icon;
           const isActive = service.status === "active";
           const isComing = service.status === "coming";
-          
-          const rawSession = typeof window !== "undefined" ? localStorage.getItem("wr_session") : null;
-          const session = rawSession ? JSON.parse(rawSession) : {};
-          const liveAuth = Boolean(session?.isLoggedIn === true && session?.user?.id);
-          const isLocked = service.requireLogin && !liveAuth;
+          const isLocked = service.requireLogin && !isAuthenticated;
 
           return (
             <div
