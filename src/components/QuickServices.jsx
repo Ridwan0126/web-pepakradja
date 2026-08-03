@@ -10,12 +10,10 @@ import {
   Lock,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function QuickServices() {
   const navigate = useNavigate();
-  
-  // Cek status login langsung dari localStorage "wr_session"
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const checkAuth = () => {
@@ -27,10 +25,7 @@ export default function QuickServices() {
       }
       
       const session = JSON.parse(rawSession);
-      
-      // Validasi stabil berdasarkan status login dan id user
       const isLogged = Boolean(session?.isLoggedIn === true && session?.user?.id);
-
       setIsAuthenticated(isLogged);
     } catch (error) {
       console.error("Gagal parsing wr_session:", error);
@@ -40,28 +35,23 @@ export default function QuickServices() {
 
   useEffect(() => {
     checkAuth();
-    
-    // Mendengarkan perubahan storage jika ada aktivitas dari tab lain
     window.addEventListener("storage", checkAuth);
     return () => {
       window.removeEventListener("storage", checkAuth);
     };
   }, []);
 
-  const handleServiceClick = (service, e) => {
+  const handleServiceClick = (service) => {
     if (service.status === "coming") {
-      e.preventDefault();
       return;
     }
 
-    // Pengecekan ulang secara langsung saat tombol diklik (mencegah stale state)
+    // Pengecekan langsung secara live saat tombol diklik
     const rawSession = localStorage.getItem("wr_session");
     const session = rawSession ? JSON.parse(rawSession) : {};
     const currentIsLogged = Boolean(session?.isLoggedIn === true && session?.user?.id);
 
     if (service.requireLogin && !currentIsLogged) {
-      e.preventDefault();
-
       Swal.fire({
         icon: "warning",
         title: "Anda perlu Masuk",
@@ -74,6 +64,8 @@ export default function QuickServices() {
           navigate("/login");
         }
       });
+    } else {
+      navigate(service.link);
     }
   };
 
@@ -117,18 +109,16 @@ export default function QuickServices() {
           const isActive = service.status === "active";
           const isComing = service.status === "coming";
           
-          // Validasi langsung secara live untuk UI lock pada card
           const rawSession = typeof window !== "undefined" ? localStorage.getItem("wr_session") : null;
           const session = rawSession ? JSON.parse(rawSession) : {};
           const liveAuth = Boolean(session?.isLoggedIn === true && session?.user?.id);
           const isLocked = service.requireLogin && !liveAuth;
 
           return (
-            <Link
+            <div
               key={service.id}
-              to={service.link}
-              onClick={(e) => handleServiceClick(service, e)}
-              className="group relative mt-2 overflow-hidden rounded-2xl border border-white/50 bg-white/30 backdrop-blur-2xl backdrop-saturate-150 p-3.5 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:bg-white/50 hover:border-2 hover:border-green-500 hover:-translate-y-0.5 flex flex-col justify-between"
+              onClick={() => handleServiceClick(service)}
+              className="group relative mt-2 overflow-hidden rounded-2xl border border-white/50 bg-white/30 backdrop-blur-2xl backdrop-saturate-150 p-3.5 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:bg-white/50 hover:border-2 hover:border-green-500 hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer"
             >
               <div
                 className={`absolute inset-0 opacity-[0.03] transition-opacity duration-300 group-hover:opacity-[0.06] bg-gradient-to-br ${service.color}`}
@@ -192,7 +182,7 @@ export default function QuickServices() {
                   </div>
                 </div>
               )}
-            </Link>
+            </div>
           );
         })}
       </div>
