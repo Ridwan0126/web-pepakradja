@@ -21,7 +21,6 @@ export default function QuickServices() {
       return;
     }
 
-    // Tunggu sebentar jika AuthContext masih dalam proses loading awal
     if (isLoading) return;
 
     if (service.requireLogin && !isAuthenticated) {
