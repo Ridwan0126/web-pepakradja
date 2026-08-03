@@ -30,6 +30,9 @@ import {
   ChevronRight,
   AlertTriangle,
   Upload,
+  History,
+  Calendar,
+  Eye,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import Swal from "sweetalert2";
@@ -37,7 +40,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // IMPORT FIREBASE SDK MODULAR (Firestore)
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
 
 // Inisialisasi Firebase
 const app = initializeApp(firebaseConfig);
@@ -73,6 +76,12 @@ export default function SPTRD() {
   const [formData, setFormData] = useState({});
   const [showShareModal, setShowShareModal] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+
+  // HISTORY STATES
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyList, setHistoryList] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   const session =
@@ -232,8 +241,8 @@ export default function SPTRD() {
     isLoadMore = false
   ) => {
     try {
-      const query = keywordSearch.toLowerCase().trim();
-      if (!query) return;
+      const queryVal = keywordSearch.toLowerCase().trim();
+      if (!queryVal) return;
 
       if (!isLoadMore) {
         setLastSearch(keywordSearch);
@@ -247,7 +256,7 @@ export default function SPTRD() {
       setSearchOpen(true);
 
       const res = await fetch(
-        `/bapenda/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(query)}`,
+        `/bapenda/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(queryVal)}`,
         {
           headers: {
             token: "xV3nKd8QpL5rTyHuWc2MfZaJbE7sRt1",
@@ -364,9 +373,11 @@ export default function SPTRD() {
       console.error("Gagal mengambil data KTP untuk lampiran:", err);
     }
 
-    setFormData({
+    const newFormData = {
       nomor: `SPTRD-${Date.now()}`,
       tanggal: formatDate(new Date()),
+      timestamp: new Date().toISOString(),
+      userId: String(wr?.id || wr?.npwrd || wr?.nik_npwp),
       nama: wr?.nama || "-",
       alamat: wr?.alamat || "-",
       nik: wr?.nik_npwp || "-",
@@ -394,9 +405,61 @@ export default function SPTRD() {
         wr: wr?.npwrd,
         obyek: targetObyek?.id,
       }),
-    });
+    };
 
+    // Simpan ke Firestore koleksi sptrd_history
+    try {
+      await addDoc(collection(db, "sptrd_history"), newFormData);
+    } catch (err) {
+      console.error("Gagal menyimpan history SPTRD ke Firebase:", err);
+    }
+
+    setFormData(newFormData);
     setShowPreviewModal(true);
+  };
+
+  // =========================
+  // FETCH HISTORY DARI FIRESTORE
+  // =========================
+  const handleOpenHistory = async () => {
+    if (!wr?.nama) {
+      Swal.fire({
+        icon: "warning",
+        title: "Belum Login",
+        text: "Silakan login terlebih dahulu untuk melihat riwayat SPTRD.",
+      });
+      return;
+    }
+
+    setShowHistoryModal(true);
+    setLoadingHistory(true);
+
+    try {
+      const userId = String(wr?.id || wr?.npwrd || wr?.nik_npwp);
+      const q = query(
+        collection(db, "sptrd_history"),
+        where("userId", "==", userId)
+      );
+      const querySnapshot = await getDocs(q);
+      const list = [];
+      querySnapshot.forEach((docSnap) => {
+        list.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      // Urutkan berdasarkan tanggal terbaru jika ada timestamp
+      list.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+      setHistoryList(list);
+    } catch (err) {
+      console.error("Gagal memuat history:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: "Terjadi kesalahan saat memuat riwayat SPTRD.",
+      });
+    } finally {
+      setLoadingHistory(false);
+    }
   };
 
   const handlePrint = () => {
@@ -424,14 +487,22 @@ export default function SPTRD() {
       <Header />
 
       <div className="pt-32 pb-20 max-w-7xl mx-auto px-4">
-        {/* INFO */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            Surat Pemberitahuan Retribusi Daerah (SPTRD)
-          </h1>
-          <p className="opacity-90">
-            Cari / tentukan obyek / layanan terlebih dahulu untuk mengajukan permohonan / SPTRD.
-          </p>
+        {/* INFO & TOMBOL HISTORY */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              Surat Pemberitahuan Retribusi Daerah (SPTRD)
+            </h1>
+            <p className="opacity-90">
+              Cari / tentukan obyek / layanan terlebih dahulu untuk mengajukan permohonan / SPTRD.
+            </p>
+          </div>
+          <button
+            onClick={handleOpenHistory}
+            className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all border border-white/30 shadow-lg backdrop-blur-md"
+          >
+            <History size={20} /> Riwayat SPTRD
+          </button>
         </div>
 
         {/* NOTIFIKASI STATUS KTP */}
@@ -609,7 +680,7 @@ export default function SPTRD() {
           </div>
         )}
 
-        {/* DETAIL MODAL */}
+        {/* DETAIL MODAL OBYEK */}
         {showDetailModal && selectedObyek && (() => {
           const images = getAllPhotos(selectedObyek);
           const finalImages = images.length > 0 ? images : ["/images/logopepakraja.png"];
@@ -801,6 +872,80 @@ export default function SPTRD() {
           );
         })()}
 
+        {/* MODAL RIWAYAT (HISTORY) CARD LIST */}
+        {showHistoryModal && (
+          <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
+              <div className="sticky top-0 z-20 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <History className="w-6 h-6 text-blue-600" />
+                  <h2 className="text-xl font-bold text-slate-900">Riwayat Pengajuan SPTRD</h2>
+                </div>
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {loadingHistory ? (
+                  <div className="text-center py-12 text-slate-500">Memuat riwayat pengajuan...</div>
+                ) : historyList.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <FileText size={48} className="mx-auto mb-3 text-slate-300" />
+                    <p className="font-semibold">Belum ada riwayat pengajuan SPTRD.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {historyList.map((item, idx) => (
+                      <div
+                        key={item.id || idx}
+                        className="bg-slate-50 border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">
+                              {item.nomor}
+                            </span>
+                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                              <Calendar size={12} /> {item.tanggal}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-slate-900 text-base">{item.obyek}</h3>
+                          <p className="text-xs text-slate-600">
+                            Volume: <span className="font-semibold text-slate-800">{item.volume} {item.satuan}</span> | Total Retribusi: <span className="font-semibold text-green-600">Rp {rupiah(item.nilaiRetribusi)}</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setFormData(item);
+                            setShowHistoryModal(false);
+                            setShowPreviewModal(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm flex-shrink-0"
+                        >
+                          <Eye size={16} /> Lihat Preview
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="sticky bottom-0 z-20 border-t p-4 bg-white flex justify-end">
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-xl text-sm font-semibold transition-all"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* MODAL PREVIEW SPTRD (DENGAN 2 LEMBAR) */}
         {showPreviewModal && (
           <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
@@ -869,7 +1014,7 @@ export default function SPTRD() {
                       <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
                       <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
                       <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek}</td></tr>
-                      <tr><td>Uraian Deskripsi / Volume</td><td>:</td><td>{formData.keterangan}</td></tr>
+                      <tr><td>Uraian Deskripsi / Volume</td><td>:</td><td>{formData.volume} {formData.satuan}</td></tr>
                       <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
                       <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
                       <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} × Rp {rupiah(formData.tarif)})</td></tr>
@@ -899,7 +1044,7 @@ export default function SPTRD() {
                 <div className="signature-jtg">
                   <div></div>
                   <div className="signature-right">
-                    <p>{formData.alamat}, {formData.tanggal}</p>
+                    <p>{formData.kota}, {formData.tanggal}</p>
                     <p>Wajib Retribusi / Kuasa</p>
                     <div className="ttd-space-jtg"></div>
                     <p>.........................................</p>
