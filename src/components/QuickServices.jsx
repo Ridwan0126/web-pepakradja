@@ -14,26 +14,25 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function QuickServices() {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
-  // Pengecekan tambahan langsung dari localStorage untuk mendeteksi data header/session darurat
-  const checkDirectAuth = () => {
+  // Fungsi untuk mengecek status login secara langsung dari localStorage (paling aman & akurat)
+  const checkIsLoggedIn = () => {
     try {
-      const session = JSON.parse(localStorage.getItem("wr_session") || "{}");
-      const userHeader = JSON.parse(localStorage.getItem("wr_user_header") || "{}");
-      return Boolean(
-        isAuthenticated || 
-        session?.isLoggedIn || 
-        session?.user?.id || 
-        userHeader?.nama || 
-        userHeader?.npwrd
-      );
-    } catch {
+      const session = localStorage.getItem("wr_session");
+      const userHeader = localStorage.getItem("wr_user_header");
+      
+      // Jika salah satu data penyimpanan lokal ada, anggap user sudah login
+      if (session || userHeader) {
+        return true;
+      }
+      return false;
+    } catch (e) {
       return false;
     }
   };
 
-  const isUserLoggedIn = checkDirectAuth();
+  const isUserLoggedIn = checkIsLoggedIn();
 
   const handleServiceClick = (service) => {
     if (service.status === "coming") {
@@ -42,6 +41,7 @@ export default function QuickServices() {
 
     if (isLoading) return;
 
+    // Jika layanan butuh login tapi user terdeteksi belum ada session/header
     if (service.requireLogin && !isUserLoggedIn) {
       Swal.fire({
         icon: "warning",
@@ -56,6 +56,7 @@ export default function QuickServices() {
         }
       });
     } else {
+      // Langsung arahkan ke link tujuan (misal: /sptrd atau /skrd)
       navigate(service.link);
     }
   };
