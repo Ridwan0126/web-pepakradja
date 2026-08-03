@@ -1104,7 +1104,7 @@ export default function SPTRD() {
                 <div className="signature-jtg">
                   <div></div>
                   <div className="signature-right">
-                    <p>{formData.kota}, {formData.tanggal}</p>
+                    <p>{formData.alamat}, {formData.tanggal}</p>
                     <p>Wajib Retribusi / Kuasa</p>
                     <div className="ttd-space-jtg"></div>
                     <p>.........................................</p>
