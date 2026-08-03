@@ -33,6 +33,7 @@ import {
   History,
   Calendar,
   Eye,
+  Save,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import Swal from "sweetalert2";
@@ -40,7 +41,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // IMPORT FIREBASE SDK MODULAR (Firestore)
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where } from "firebase/firestore";
 
 // Inisialisasi Firebase
 const app = initializeApp(firebaseConfig);
@@ -74,8 +75,7 @@ export default function SPTRD() {
   const [activeImage, setActiveImage] = useState(0);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [formData, setFormData] = useState({});
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
+  const [isFromHistory, setIsFromHistory] = useState(false);
 
   // HISTORY STATES
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -407,15 +407,70 @@ export default function SPTRD() {
       }),
     };
 
-    // Simpan ke Firestore koleksi sptrd_history
-    try {
-      await addDoc(collection(db, "sptrd_history"), newFormData);
-    } catch (err) {
-      console.error("Gagal menyimpan history SPTRD ke Firebase:", err);
+    setFormData(newFormData);
+    setIsFromHistory(false);
+    setShowPreviewModal(true);
+  };
+
+  // =========================
+  // HANDLE SIMPAN KE FIREBASE DENGAN KONFIRMASI
+  // =========================
+  const handleSaveToFirebase = async () => {
+    const confirmResult = await Swal.fire({
+      title: "Konfirmasi Permohonan",
+      text: "Apakah anda yakin ingin membuat permohonan?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#2563eb",
+      cancelButtonColor: "#d33",
+    });
+
+    if (confirmResult.isDismissed) {
+      const cancelResult = await Swal.fire({
+        title: "Batalkan Permohonan",
+        text: "Apakah anda yakin ingin membatalkan?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Ya",
+        cancelButtonText: "Tidak",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      });
+
+      if (cancelResult.isConfirmed) {
+        Swal.fire({
+          icon: "info",
+          title: "Dibatalkan",
+          text: "Permohonan dibatalkan.",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+      return;
     }
 
-    setFormData(newFormData);
-    setShowPreviewModal(true);
+    if (confirmResult.isConfirmed) {
+      try {
+        await addDoc(collection(db, "sptrd_history"), formData);
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Permohonan SPTRD berhasil disimpan.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        setShowPreviewModal(false);
+      } catch (err) {
+        console.error("Gagal menyimpan history SPTRD ke Firebase:", err);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Terjadi kesalahan saat menyimpan permohonan ke database.",
+        });
+      }
+    }
   };
 
   // =========================
@@ -446,7 +501,6 @@ export default function SPTRD() {
         list.push({ id: docSnap.id, ...docSnap.data() });
       });
 
-      // Urutkan berdasarkan tanggal terbaru jika ada timestamp
       list.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
 
       setHistoryList(list);
@@ -921,6 +975,7 @@ export default function SPTRD() {
                         <button
                           onClick={() => {
                             setFormData(item);
+                            setIsFromHistory(true);
                             setShowHistoryModal(false);
                             setShowPreviewModal(true);
                           }}
@@ -950,6 +1005,11 @@ export default function SPTRD() {
         {showPreviewModal && (
           <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
             <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-lg p-4 flex justify-center gap-3 print:hidden">
+              {!isFromHistory && (
+                <button onClick={handleSaveToFirebase} className="btn-action bg-emerald-600 hover:bg-emerald-700">
+                  <Save size={18} /> Simpan
+                </button>
+              )}
               <button onClick={handleDownloadPDF} className="btn-action bg-blue-700">
                 <Download size={18} /> Download PDF
               </button>
