@@ -14,6 +14,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function QuickServices() {
   const navigate = useNavigate();
+  
+  // Cek status login langsung dari localStorage "wr_session"
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const checkAuth = () => {
@@ -26,13 +28,8 @@ export default function QuickServices() {
       
       const session = JSON.parse(rawSession);
       
-      // Pengecekan divalidasi langsung dari isLoggedIn dan keberadaan user.id
-      const isValidTime = session?.expiredAt ? Date.now() < session.expiredAt : true;
-      const isLogged = Boolean(
-        session?.isLoggedIn === true && 
-        isValidTime && 
-        session?.user?.id
-      );
+      // Validasi stabil berdasarkan status login dan id user
+      const isLogged = Boolean(session?.isLoggedIn === true && session?.user?.id);
 
       setIsAuthenticated(isLogged);
     } catch (error) {
@@ -44,7 +41,7 @@ export default function QuickServices() {
   useEffect(() => {
     checkAuth();
     
-    // Event listener untuk mendeteksi perubahan storage lintas komponen/halaman
+    // Mendengarkan perubahan storage jika ada aktivitas dari tab lain
     window.addEventListener("storage", checkAuth);
     return () => {
       window.removeEventListener("storage", checkAuth);
@@ -57,15 +54,10 @@ export default function QuickServices() {
       return;
     }
 
-    // Validasi langsung secara live saat tombol diklik (mencegah stale state)
+    // Pengecekan ulang secara langsung saat tombol diklik (mencegah stale state)
     const rawSession = localStorage.getItem("wr_session");
     const session = rawSession ? JSON.parse(rawSession) : {};
-    const isValidTime = session?.expiredAt ? Date.now() < session.expiredAt : true;
-    const currentIsLogged = Boolean(
-      session?.isLoggedIn === true && 
-      isValidTime && 
-      session?.user?.id
-    );
+    const currentIsLogged = Boolean(session?.isLoggedIn === true && session?.user?.id);
 
     if (service.requireLogin && !currentIsLogged) {
       e.preventDefault();
@@ -125,11 +117,10 @@ export default function QuickServices() {
           const isActive = service.status === "active";
           const isComing = service.status === "coming";
           
-          // Evaluasi live untuk tampilan ikon lock pada tiap card
+          // Validasi langsung secara live untuk UI lock pada card
           const rawSession = typeof window !== "undefined" ? localStorage.getItem("wr_session") : null;
           const session = rawSession ? JSON.parse(rawSession) : {};
-          const isValidTime = session?.expiredAt ? Date.now() < session.expiredAt : true;
-          const liveAuth = Boolean(session?.isLoggedIn === true && isValidTime && session?.user?.id);
+          const liveAuth = Boolean(session?.isLoggedIn === true && session?.user?.id);
           const isLocked = service.requireLogin && !liveAuth;
 
           return (
