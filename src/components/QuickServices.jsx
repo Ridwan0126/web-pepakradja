@@ -19,13 +19,30 @@ export default function QuickServices() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const session =
-      typeof window !== "undefined"
-        ? JSON.parse(localStorage.getItem("wr_session")) || {}
-        : {};
-    // Dianggap login jika ada data user dan nama/npwrd-nya tersedia
-    const isLogged = Boolean(session?.user?.nama || session?.user?.npwrd || session?.token);
-    setIsAuthenticated(isLogged);
+    const rawSession = localStorage.getItem("wr_session");
+    if (rawSession) {
+      try {
+        const session = JSON.parse(rawSession);
+        
+        // DEBUG: Cek isi session di Console Browser (F12)
+        console.log("Data Session:", session);
+
+        // SESUAIKAN KONDISI INI DENGAN STRUKTUR JSON DI LOCALSTORAGE ANDA
+        // Contoh jika token atau data user disimpan langsung di root objek:
+        const isLogged = Boolean(
+          session?.user?.nama || 
+          session?.user?.npwrd || 
+          session?.token || 
+          session?.nama || // Tambahkan ini jika nama disimpan di luar objek user
+          session?.npwrd   // Tambahkan ini jika npwrd disimpan di luar objek user
+        );
+
+        setIsAuthenticated(isLogged);
+      } catch (error) {
+        console.error("Gagal parsing wr_session:", error);
+        setIsAuthenticated(false);
+      }
+    }
   }, []);
 
   const handleServiceClick = (service, e) => {
