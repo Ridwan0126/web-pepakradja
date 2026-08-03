@@ -1,3 +1,13 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyCRtgEJgJef3PNkPxPxbilsFRsv7Ldrv5Q",
+  authDomain: "retribusi-bapenda.firebaseapp.com",
+  projectId: "retribusi-bapenda",
+  storageBucket: "retribusi-bapenda.firebasestorage.app",
+  messagingSenderId: "479725161202",
+  appId: "1:479725161202:web:3980d3054259bd5a235e6b",
+  measurementId: "G-TJL81KLS2Q"
+};
+
 import { useState, useEffect, useRef } from "react";
 import {
   FileText,
@@ -18,10 +28,20 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  AlertTriangle,
+  Upload,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import Swal from "sweetalert2";
 import { motion, AnimatePresence } from "framer-motion";
+
+// IMPORT FIREBASE SDK MODULAR (Firestore)
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+
+// Inisialisasi Firebase diletakkan di luar komponen agar tidak terinisialisasi ulang terus-menerus
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -30,6 +50,12 @@ export default function SPTRD() {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // KTP & FIRESTORE CHECK STATES
+  const [hasKtp, setHasKtp] = useState(true);
+  const [checkingKtp, setCheckingKtp] = useState(true);
+  const [uploadingKtp, setUploadingKtp] = useState(false);
+  const fileInputRef = useRef(null);
 
   // SEARCH STATES
   const searchRef = useRef(null);
@@ -40,7 +66,7 @@ export default function SPTRD() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
-  // DETAIL & PREVIEW STATES (Menyamakan ProductDetail.jsx)
+  // DETAIL & PREVIEW STATES
   const [selectedObyek, setSelectedObyek] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -55,6 +81,127 @@ export default function SPTRD() {
       : {};
 
   const wr = session?.user || {};
+
+  // =========================
+  // CEK KTP DI FIRESTORE
+  // =========================
+  useEffect(() => {
+    const checkUserKtpInFirestore = async () => {
+      if (!wr?.id && !wr?.npwrd && !wr?.nik_npwp) {
+        setCheckingKtp(false);
+        return;
+      }
+
+      try {
+        const userId = wr?.id || wr?.npwrd || wr?.nik_npwp;
+        const userDocRef = doc(db, "users", String(userId));
+        const userSnap = await getDoc(userDocRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (userData?.foto_ktp || userData?.ktp_base64) {
+            setHasKtp(true);
+          } else {
+            setHasKtp(false);
+          }
+        } else {
+          setHasKtp(false);
+        }
+      } catch (err) {
+        console.error("Gagal mengecek KTP di Firestore:", err);
+      } finally {
+        setCheckingKtp(false);
+      }
+    };
+
+    checkUserKtpInFirestore();
+  }, [wr]);
+
+  // =========================
+  // HANDLE UPLOAD KTP KE FIRESTORE (BASE64)
+  // =========================
+  const handleUploadKtp = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validasi tipe file (Foto atau PDF)
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+    if (!allowedTypes.includes(file.type)) {
+      Swal.fire({
+        icon: "error",
+        title: "Format Tidak Valid",
+        text: "Harap unggah file berformat Foto (JPG/PNG) atau PDF.",
+      });
+      return;
+    }
+
+    // Batasan ukuran file (maksimal 1 MB karena batasan ukuran dokumen Firestore)
+    if (file.size > 1048576) {
+      Swal.fire({
+        icon: "warning",
+        title: "File Terlalu Besar",
+        text: "Ukuran file maksimal adalah 1 MB agar dapat disimpan ke database Firestore. Harap kompres file Anda terlebih dahulu.",
+      });
+      return;
+    }
+
+    try {
+      setUploadingKtp(true);
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64String = reader.result;
+        const userId = wr?.id || wr?.npwrd || wr?.nik_npwp;
+        const userDocRef = doc(db, "users", String(userId));
+        const userSnap = await getDoc(userDocRef);
+
+        const payload = {
+          nama: wr?.nama || "",
+          npwrd: wr?.npwrd || "",
+          nik: wr?.nik_npwp || "",
+          foto_ktp: base64String,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (userSnap.exists()) {
+          await updateDoc(userDocRef, payload);
+        } else {
+          payload.created_at = new Date().toISOString();
+          await setDoc(userDocRef, payload);
+        }
+
+        setHasKtp(true);
+        setUploadingKtp(false);
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Data KTP berhasil disimpan ke database.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      };
+
+      reader.onerror = (error) => {
+        console.error("Reader Error:", error);
+        setUploadingKtp(false);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Membaca File",
+          text: "Terjadi kesalahan saat memproses file.",
+        });
+      };
+
+    } catch (err) {
+      console.error("Firestore Save Error:", err);
+      setUploadingKtp(false);
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menyimpan",
+        text: "Terjadi kesalahan saat menyimpan data KTP ke database.",
+      });
+    }
+  };
 
   const rupiah = (val) => Number(val || 0).toLocaleString("id-ID");
 
@@ -172,6 +319,17 @@ export default function SPTRD() {
       return;
     }
 
+    // Pengecekan KTP sebelum membuat SPTRD
+    if (!hasKtp) {
+      Swal.fire({
+        icon: "warning",
+        title: "Data Diri Belum Lengkap",
+        text: "Anda belum mengunggah foto KTP. Silakan lengkapi terlebih dahulu.",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
     setFormData({
       nomor: `SPTRD-${Date.now()}`,
       tanggal: formatDate(new Date()),
@@ -239,6 +397,40 @@ export default function SPTRD() {
           </p>
         </div>
 
+        {/* NOTIFIKASI KTP BELUM DI UPLOAD */}
+        {!checkingKtp && !hasKtp && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 rounded-2xl p-6 shadow-md mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-amber-900 text-base">Peringatan: Data Diri Belum Lengkap</h3>
+                <p className="text-amber-700 text-sm">
+                  Anda belum melakukan upload data diri (Foto/PDF KTP). Segera lengkapi untuk dapat mengajukan SPTRD.
+                </p>
+              </div>
+            </div>
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleUploadKtp}
+                accept="image/*,application/pdf"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingKtp}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+              >
+                <Upload size={16} />
+                {uploadingKtp ? "Menyimpan..." : "Upload KTP"}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* SEARCH BAR SECTION */}
         <div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 relative">
@@ -277,7 +469,7 @@ export default function SPTRD() {
           </div>
         </div>
 
-        {/* SECTION HASIL PENCARIAN BERBENTUK CARD DI BAWAH (BUKAN DROPDOWN) */}
+        {/* SECTION HASIL PENCARIAN */}
         {searchOpen && keyword.trim() && (
           <div className="mb-12">
             <div className="flex items-center justify-between mb-4 px-2">
@@ -320,7 +512,6 @@ export default function SPTRD() {
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute top-3 left-3 flex gap-2">
-                          
                           {item.is_laku ? (
                             <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
                               Tersewa
@@ -379,7 +570,7 @@ export default function SPTRD() {
           </div>
         )}
 
-        {/* DETAIL MODAL (INFORMASI LENGKAP SAMA SEPERTI PRODUCT DETAIL) */}
+        {/* DETAIL MODAL */}
         {showDetailModal && selectedObyek && (() => {
           const images = getAllPhotos(selectedObyek);
           const finalImages = images.length > 0 ? images : ["/images/logopepakraja.png"];
