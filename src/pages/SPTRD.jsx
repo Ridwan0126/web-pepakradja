@@ -327,6 +327,30 @@ export default function SPTRD() {
       return;
     }
 
+    // Minta input volume terlebih dahulu via SweetAlert2
+    const { value: inputVolume, dismiss } = await Swal.fire({
+      title: "Masukkan Volume",
+      text: "Masukkan jumlah/volume untuk pengajuan retribusi ini:",
+      input: "number",
+      inputAttributes: {
+        min: 1,
+        step: 1,
+      },
+      inputValue: 1,
+      showCancelButton: true,
+      confirmButtonText: "Lanjutkan",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#2563eb",
+    });
+
+    if (dismiss === Swal.DismissReason.cancel || !inputVolume) {
+      return;
+    }
+
+    const volume = parseFloat(inputVolume) || 1;
+    const tarif = Number(targetObyek?.tariftbl?.tarif || 0);
+    const nilaiRetribusi = volume * tarif;
+
     // Ambil data KTP dari Firestore untuk ditampilkan di Lembar 2
     let ktpDataUrl = "";
     try {
@@ -360,8 +384,10 @@ export default function SPTRD() {
       keterangan: targetObyek?.keterangan || "-",
       opd: targetObyek?.opd?.nama || "-",
       uppd: targetObyek?.uppd?.nama || "-",
-      tarif: targetObyek?.tariftbl?.tarif || 0,
+      tarif: tarif,
+      volume: volume,
       satuan: targetObyek?.tariftbl?.satuan?.satuan || "-",
+      nilaiRetribusi: nilaiRetribusi,
       kota: targetObyek?.kota?.kab_kota || "JAWA TENGAH",
       ktpUrl: ktpDataUrl,
       qr: JSON.stringify({
@@ -843,9 +869,10 @@ export default function SPTRD() {
                       <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
                       <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
                       <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek}</td></tr>
-                      <tr><td>Uraian Deskripsi / Volume</td><td>:</td><td>Tarif Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
+                      <tr><td>Uraian Deskripsi / Volume</td><td>:</td><td>{formData.volume} {formData.satuan}</td></tr>
                       <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
-                      <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)}</td></tr>
+                      <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
+                      <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} × Rp {rupiah(formData.tarif)})</td></tr>
                     </tbody>
                   </table>
                 </div>
