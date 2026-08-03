@@ -46,6 +46,10 @@ export default function QuickServices() {
       return;
     }
 
+    console.log(session);
+console.log("LOGIN ?", session?.isLoggedIn);
+console.log("USER ID ?", session?.user?.id);
+
     // Pengecekan langsung secara live saat tombol diklik
     const rawSession = localStorage.getItem("wr_session");
     const session = rawSession ? JSON.parse(rawSession) : {};
