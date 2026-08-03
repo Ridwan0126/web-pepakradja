@@ -16,6 +16,25 @@ export default function QuickServices() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Pengecekan tambahan langsung dari localStorage untuk mendeteksi data header/session darurat
+  const checkDirectAuth = () => {
+    try {
+      const session = JSON.parse(localStorage.getItem("wr_session") || "{}");
+      const userHeader = JSON.parse(localStorage.getItem("wr_user_header") || "{}");
+      return Boolean(
+        isAuthenticated || 
+        session?.isLoggedIn || 
+        session?.user?.id || 
+        userHeader?.nama || 
+        userHeader?.npwrd
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const isUserLoggedIn = checkDirectAuth();
+
   const handleServiceClick = (service) => {
     if (service.status === "coming") {
       return;
@@ -23,7 +42,7 @@ export default function QuickServices() {
 
     if (isLoading) return;
 
-    if (service.requireLogin && !isAuthenticated) {
+    if (service.requireLogin && !isUserLoggedIn) {
       Swal.fire({
         icon: "warning",
         title: "Anda perlu Masuk",
@@ -80,7 +99,7 @@ export default function QuickServices() {
           const Icon = service.icon;
           const isActive = service.status === "active";
           const isComing = service.status === "coming";
-          const isLocked = service.requireLogin && !isAuthenticated;
+          const isLocked = service.requireLogin && !isUserLoggedIn;
 
           return (
             <div
