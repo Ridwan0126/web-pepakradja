@@ -405,6 +405,7 @@ export default function SPTRD() {
         wr: wr?.npwrd,
         obyek: targetObyek?.id,
       }),
+      idgen: targetObyek?.id_gen_obyek,
     };
 
     setFormData(newFormData);
@@ -1073,7 +1074,7 @@ export default function SPTRD() {
                     <tbody>
                       <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
                       <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
-                      <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek}</td></tr>
+                      <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek}{formData.idgen}</td></tr>
                       <tr><td>Uraian Deskripsi / Volume</td><td>:</td><td>{formData.keterangan}</td></tr>
                       <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
                       <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
