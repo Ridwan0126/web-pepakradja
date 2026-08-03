@@ -39,7 +39,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
-// Inisialisasi Firebase diletakkan di luar komponen agar tidak terinisialisasi ulang terus-menerus
+// Inisialisasi Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -124,7 +124,6 @@ export default function SPTRD() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validasi tipe file (Foto atau PDF)
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
       Swal.fire({
@@ -135,7 +134,6 @@ export default function SPTRD() {
       return;
     }
 
-    // Batasan ukuran file (maksimal 1 MB karena batasan ukuran dokumen Firestore)
     if (file.size > 1048576) {
       Swal.fire({
         icon: "warning",
@@ -176,7 +174,7 @@ export default function SPTRD() {
         Swal.fire({
           icon: "success",
           title: "Berhasil!",
-          text: "Data KTP berhasil disimpan ke database.",
+          text: "Anda telah upload dokumen data diri.",
           timer: 2000,
           showConfirmButton: false,
         });
@@ -295,7 +293,7 @@ export default function SPTRD() {
     );
   };
 
-  const handlePreviewSPTRD = (targetObyek) => {
+  const handlePreviewSPTRD = async (targetObyek) => {
     if (!targetObyek) return;
 
     if (targetObyek?.is_laku) {
@@ -319,7 +317,6 @@ export default function SPTRD() {
       return;
     }
 
-    // Pengecekan KTP sebelum membuat SPTRD
     if (!hasKtp) {
       Swal.fire({
         icon: "warning",
@@ -328,6 +325,19 @@ export default function SPTRD() {
         confirmButtonColor: "#3085d6",
       });
       return;
+    }
+
+    // Ambil data KTP dari Firestore untuk ditampilkan di Lembar 2
+    let ktpDataUrl = "";
+    try {
+      const userId = wr?.id || wr?.npwrd || wr?.nik_npwp;
+      const userDocRef = doc(db, "users", String(userId));
+      const userSnap = await getDoc(userDocRef);
+      if (userSnap.exists()) {
+        ktpDataUrl = userSnap.data()?.foto_ktp || "";
+      }
+    } catch (err) {
+      console.error("Gagal mengambil data KTP untuk lampiran:", err);
     }
 
     setFormData({
@@ -353,6 +363,7 @@ export default function SPTRD() {
       tarif: targetObyek?.tariftbl?.tarif || 0,
       satuan: targetObyek?.tariftbl?.satuan?.satuan || "-",
       kota: targetObyek?.kota?.kab_kota || "JAWA TENGAH",
+      ktpUrl: ktpDataUrl,
       qr: JSON.stringify({
         wr: wr?.npwrd,
         obyek: targetObyek?.id,
@@ -397,17 +408,19 @@ export default function SPTRD() {
           </p>
         </div>
 
-        {/* NOTIFIKASI KTP BELUM DI UPLOAD */}
-        {!checkingKtp && !hasKtp && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 rounded-2xl p-6 shadow-md mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* NOTIFIKASI STATUS KTP */}
+        {!checkingKtp && (
+          <div className={`border-l-4 rounded-2xl p-6 shadow-md mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${hasKtp ? "bg-green-50 border-green-500" : "bg-amber-50 border-amber-500"}`}>
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
-                <AlertTriangle size={24} />
+              <div className={`p-3 rounded-xl ${hasKtp ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}>
+                {hasKtp ? <CheckCircle size={24} /> : <AlertTriangle size={24} />}
               </div>
               <div>
-                <h3 className="font-bold text-amber-900 text-base">Peringatan: Data Diri Belum Lengkap</h3>
-                <p className="text-amber-700 text-sm">
-                  Anda belum melakukan upload data diri (Foto/PDF KTP). Segera lengkapi untuk dapat mengajukan SPTRD.
+                <h3 className={`font-bold text-base ${hasKtp ? "text-green-900" : "text-amber-900"}`}>
+                  {hasKtp ? "Informasi: Dokumen Data Diri Lengkap" : "Peringatan: Data Diri Belum Lengkap"}
+                </h3>
+                <p className={`text-sm ${hasKtp ? "text-green-700" : "text-amber-700"}`}>
+                  {hasKtp ? "Anda telah upload dokumen data diri. Dokumen KTP siap dilampirkan pada permohonan." : "Anda belum melakukan upload data diri (Foto/PDF KTP). Segera lengkapi untuk dapat mengajukan SPTRD."}
                 </p>
               </div>
             </div>
@@ -422,10 +435,10 @@ export default function SPTRD() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingKtp}
-                className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
+                className={`${hasKtp ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"} text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50`}
               >
                 <Upload size={16} />
-                {uploadingKtp ? "Menyimpan..." : "Upload KTP"}
+                {uploadingKtp ? "Menyimpan..." : hasKtp ? "Perbarui KTP" : "Upload KTP"}
               </button>
             </div>
           </div>
@@ -762,7 +775,7 @@ export default function SPTRD() {
           );
         })()}
 
-        {/* MODAL PREVIEW SPTRD */}
+        {/* MODAL PREVIEW SPTRD (DENGAN 2 LEMBAR) */}
         {showPreviewModal && (
           <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
             <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-lg p-4 flex justify-center gap-3 print:hidden">
@@ -777,7 +790,9 @@ export default function SPTRD() {
               </button>
             </div>
 
-            <div className="flex justify-center py-10 print:p-0">
+            <div className="flex flex-col items-center py-10 gap-10 print:p-0 print:gap-0">
+              
+              {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
               <div id="sptrd-document" className="sptrd-paper-jtg">
                 <div className="header-jtg">
                   <img
@@ -868,6 +883,44 @@ export default function SPTRD() {
                   <span>*Coret yang tidak perlu</span>
                 </div>
               </div>
+
+              {/* LEMBAR 2: LAMPIRAN FOTO/PDF KTP */}
+              <div className="sptrd-paper-jtg page-break-before">
+                <div className="text-center mb-6 border-b pb-4">
+                  <h2 className="text-lg font-bold">LAMPIRAN DOKUMEN IDENTITAS (KTP)</h2>
+                  <p className="text-xs text-gray-600">Wajib Retribusi: {formData.nama} ({formData.nik})</p>
+                </div>
+
+                <div className="flex flex-col items-center justify-center h-[80%]">
+                  {formData.ktpUrl ? (
+                    formData.ktpUrl.startsWith("data:application/pdf") ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center border rounded-xl p-4 bg-gray-50">
+                        <FileText size={64} className="text-blue-600 mb-2" />
+                        <p className="font-semibold text-sm">Dokumen KTP berformat PDF</p>
+                        <a 
+                          href={formData.ktpUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
+                        >
+                          Buka / Unduh File PDF
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="max-w-full max-h-[700px] border rounded-xl overflow-hidden shadow-md bg-white p-2">
+                        <img 
+                          src={formData.ktpUrl} 
+                          alt="Lampiran KTP" 
+                          className="max-w-full max-h-[650px] object-contain mx-auto" 
+                        />
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-gray-500 italic">Tidak ada dokumen KTP yang ditemukan.</p>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         )}
@@ -895,6 +948,10 @@ export default function SPTRD() {
           font-family: "Times New Roman", serif;
           font-size: 12px;
           color: #000;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .page-break-before {
+          page-break-before: always;
         }
         .header-jtg {
           display: flex;
@@ -992,16 +1049,18 @@ export default function SPTRD() {
             visibility: hidden;
           }
           #sptrd-document,
-          #sptrd-document * {
+          #sptrd-document *,
+          .sptrd-paper-jtg {
             visibility: visible;
           }
-          #sptrd-document {
+          .sptrd-paper-jtg {
             position: absolute;
             left: 0;
             top: 0;
             width: 210mm;
             min-height: 297mm;
             box-shadow: none;
+            page-break-after: always;
           }
           .print\\:hidden {
             display: none !important;
