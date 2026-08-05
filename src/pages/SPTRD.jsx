@@ -92,8 +92,6 @@ export default function SPTRD() {
   const [isDrawing, setIsDrawing] = useState(false);
   const ttdFileRef = useRef(null);
   const [tempTtd, setTempTtd] = useState("");
-  const [pendingObyek, setPendingObyek] = useState(null);
-  const [pendingVolume, setPendingVolume] = useState(1);
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
@@ -298,7 +296,7 @@ export default function SPTRD() {
   };
 
   // =========================
-  // HANDLE PREVIEW SPTRD & TTD
+  // HANDLE PREVIEW SPTRD
   // =========================
   const handlePreviewSPTRD = async (targetObyek) => {
     if (!targetObyek) return;
@@ -334,6 +332,16 @@ export default function SPTRD() {
       return;
     }
 
+    if (!hasTtd) {
+      Swal.fire({
+        icon: "warning",
+        title: "Tanda Tangan Belum Ada",
+        text: "Silakan buat atau upload tanda tangan Anda terlebih dahulu pada panel di halaman utama sebelum membuat SPTRD.",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
     const satuanName = targetObyek?.tariftbl?.satuan?.satuan || "Unit";
 
     const { value: inputVolume, dismiss } = await Swal.fire({
@@ -363,15 +371,6 @@ export default function SPTRD() {
     }
 
     const volume = parseFloat(inputVolume) || 1;
-
-    if (!hasTtd) {
-      setPendingObyek(targetObyek);
-      setPendingVolume(volume);
-      setTempTtd("");
-      setShowTtdModal(true);
-      return;
-    }
-
     generateSptrdDocument(targetObyek, volume);
   };
 
@@ -481,8 +480,6 @@ export default function SPTRD() {
         timer: 1500,
         showConfirmButton: false,
       });
-
-      generateSptrdDocument(pendingObyek, pendingVolume);
     } catch (err) {
       console.error("Gagal menyimpan TTD ke profil:", err);
       Swal.fire({ icon: "error", title: "Gagal", text: "Terjadi kesalahan saat menyimpan tanda tangan." });
@@ -551,16 +548,38 @@ export default function SPTRD() {
   const handleSaveToFirebase = async () => {
     const confirmResult = await Swal.fire({
       title: "Konfirmasi Permohonan",
-      text: "Apakah anda yakin ingin membuat permohonan?",
+      text: "Apakah anda yakin ingin menyimpan permohonan ini?",
       icon: "question",
       showCancelButton: true,
-      confirmButtonText: "Ya",
+      confirmButtonText: "Ya, Simpan",
       cancelButtonText: "Batal",
       confirmButtonColor: "#2563eb",
       cancelButtonColor: "#d33",
     });
 
-    if (confirmResult.isDismissed) return;
+    if (confirmResult.isDismissed) {
+      const cancelResult = await Swal.fire({
+        title: "Batalkan Permohonan",
+        text: "Apakah anda yakin ingin membatalkan penyimpanan?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Ya",
+        cancelButtonText: "Tidak",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      });
+
+      if (cancelResult.isConfirmed) {
+        Swal.fire({
+          icon: "info",
+          title: "Dibatalkan",
+          text: "Penyimpanan permohonan dibatalkan.",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+      return;
+    }
 
     if (confirmResult.isConfirmed) {
       try {
@@ -710,7 +729,7 @@ export default function SPTRD() {
                     {hasTtd ? "Tanda Tangan Tersimpan" : "Tanda Tangan Belum Ada"}
                   </h4>
                   <p className={`text-xs ${hasTtd ? "text-green-700" : "text-amber-700"}`}>
-                    {hasTtd ? "Tersimpan di profil akun Anda." : "Dibutuhkan untuk validasi dokumen."}
+                    {hasTtd ? "Tersimpan di profil akun Anda." : "Wajib dibuat sebelum buat SPTRD."}
                   </p>
                 </div>
               </div>
@@ -1224,7 +1243,7 @@ export default function SPTRD() {
           </div>
         )}
 
-        {/* MODAL PREVIEW SPTRD (DENGAN KOP SURAT & TTD TENGAH) */}
+        {/* MODAL PREVIEW SPTRD */}
         {showPreviewModal && (
           <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
             <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-lg p-4 flex justify-center gap-3 print:hidden">
@@ -1249,7 +1268,7 @@ export default function SPTRD() {
               {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
               <div id="sptrd-document" className="sptrd-paper-jtg">
                 
-                {/* KOP SURAT (DIKOREKSI AGAR CENTER SIMETRIS) */}
+                {/* KOP SURAT (DIPERBAIKI POSISINYA) */}
                 <div className="header-jtg">
                   <img
                     src="/images/logo-jateng-official.png"
@@ -1326,16 +1345,19 @@ export default function SPTRD() {
                   </p>
                 </div>
 
-                {/* TANDA TANGAN (POSISI DI TENGAH SESUAI PERMINTAAN) */}
-                <div className="signature-jtg-center">
-                  <p>{formData.kota ? formData.kota.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
-                  <p>Wajib Retribusi / Kuasa</p>
-                  <div className="ttd-space-jtg flex items-center justify-center">
-                    {formData.ttdUrl ? (
-                      <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
-                    ) : null}
+                {/* TANDA TANGAN (POSISI DI KANAN BAWAH SECARA SIMETRIS) */}
+                <div className="signature-jtg">
+                  <div></div>
+                  <div className="signature-right">
+                    <p>{formData.kota ? formData.kota.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
+                    <p>Wajib Retribusi / Kuasa</p>
+                    <div className="ttd-space-jtg flex items-center justify-center">
+                      {formData.ttdUrl ? (
+                        <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
+                      ) : null}
+                    </div>
+                    <p className="font-bold underline">{formData.nama}</p>
                   </div>
-                  <p className="font-bold underline">{formData.nama}</p>
                 </div>
 
                 <div className="footer-note">
@@ -1415,18 +1437,20 @@ export default function SPTRD() {
         .header-jtg {
           display: flex;
           align-items: center;
+          justify-content: center;
           position: relative;
-          padding-left: 80px;
+          width: 100%;
           margin-bottom: 5px;
         }
         .logo-jtg {
           width: 70px;
           position: absolute;
-          left: 0;
+          left: 10px;
         }
         .header-center {
           flex: 1;
           text-align: center;
+          padding: 0 80px;
         }
         .header-center h2 {
           margin: 0;
@@ -1494,12 +1518,14 @@ export default function SPTRD() {
           margin-top: 15px;
           line-height: 1.5;
         }
-        .signature-jtg-center {
-          width: 280px;
-          margin-left: auto;
-          margin-right: 0;
-          text-align: center;
-          margin-top: 35px;
+        .signature-jtg {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 40px;
+        }
+        .signature-right {
+          text-align: left;
+          width: 250px;
         }
         .ttd-space-jtg {
           height: 60px;
