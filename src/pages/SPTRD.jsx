@@ -1610,7 +1610,7 @@ export default function SPTRD() {
           body, html {
             background: white !important;
             width: 210mm;
-            height: 297mm;
+            height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             overflow: visible !important;
@@ -1636,12 +1636,18 @@ export default function SPTRD() {
             box-shadow: none !important;
             margin: 0 !important;
             padding: 12mm 18mm 10mm 18mm !important;
+            page-break-before: always !important;
+            break-before: page !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
             transform: none !important;
             position: relative !important;
+          }
+          .sptrd-paper-jtg:first-child {
+            page-break-before: avoid !important;
+            break-before: avoid !important;
           }
           .sptrd-paper-jtg:last-child {
             page-break-after: avoid !important;
