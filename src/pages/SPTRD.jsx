@@ -57,9 +57,10 @@ export default function SPTRD() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // KTP & FIRESTORE CHECK STATES
+  // KTP, TTD & FIRESTORE CHECK STATES
   const [hasKtp, setHasKtp] = useState(true);
-  const [checkingKtp, setCheckingKtp] = useState(true);
+  const [hasTtd, setHasTtd] = useState(false);
+  const [checkingData, setCheckingData] = useState(true);
   const [uploadingKtp, setUploadingKtp] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -86,7 +87,7 @@ export default function SPTRD() {
 
   // TTD MODAL STATES
   const [showTtdModal, setShowTtdModal] = useState(false);
-  const [ttdTab, setTtdTab] = useState("draw"); // 'draw' or 'upload'
+  const [ttdTab, setTtdTab] = useState("draw");
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const ttdFileRef = useRef(null);
@@ -104,12 +105,12 @@ export default function SPTRD() {
   const wr = session?.user || {};
 
   // =========================
-  // CEK KTP DI FIRESTORE
+  // CEK KTP & TTD DI FIRESTORE
   // =========================
   useEffect(() => {
-    const checkUserKtpInFirestore = async () => {
+    const checkUserDataInFirestore = async () => {
       if (!wr?.id && !wr?.npwrd && !wr?.nik_npwp) {
-        setCheckingKtp(false);
+        setCheckingData(false);
         return;
       }
 
@@ -120,22 +121,20 @@ export default function SPTRD() {
 
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          if (userData?.foto_ktp || userData?.ktp_base64) {
-            setHasKtp(true);
-          } else {
-            setHasKtp(false);
-          }
+          setHasKtp(!!(userData?.foto_ktp || userData?.ktp_base64));
+          setHasTtd(!!userData?.foto_ttd);
         } else {
           setHasKtp(false);
+          setHasTtd(false);
         }
       } catch (err) {
-        console.error("Gagal mengecek KTP di Firestore:", err);
+        console.error("Gagal mengecek data user di Firestore:", err);
       } finally {
-        setCheckingKtp(false);
+        setCheckingData(false);
       }
     };
 
-    checkUserKtpInFirestore();
+    checkUserDataInFirestore();
   }, [wr]);
 
   // =========================
@@ -159,14 +158,13 @@ export default function SPTRD() {
       Swal.fire({
         icon: "warning",
         title: "File Terlalu Besar",
-        text: "Ukuran file maksimal adalah 1 MB agar dapat disimpan ke database Firestore. Harap kompres file Anda terlebih dahulu.",
+        text: "Ukuran file maksimal adalah 1 MB agar dapat disimpan ke database Firestore.",
       });
       return;
     }
 
     try {
       setUploadingKtp(true);
-
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = async () => {
@@ -195,30 +193,15 @@ export default function SPTRD() {
         Swal.fire({
           icon: "success",
           title: "Berhasil!",
-          text: "Anda telah upload dokumen data diri.",
+          text: "Dokumen KTP berhasil disimpan.",
           timer: 2000,
           showConfirmButton: false,
         });
       };
-
-      reader.onerror = (error) => {
-        console.error("Reader Error:", error);
-        setUploadingKtp(false);
-        Swal.fire({
-          icon: "error",
-          title: "Gagal Membaca File",
-          text: "Terjadi kesalahan saat memproses file.",
-        });
-      };
-
     } catch (err) {
       console.error("Firestore Save Error:", err);
       setUploadingKtp(false);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal Menyimpan",
-        text: "Terjadi kesalahan saat menyimpan data KTP ke database.",
-      });
+      Swal.fire({ icon: "error", title: "Gagal Menyimpan", text: "Terjadi kesalahan saat menyimpan KTP." });
     }
   };
 
@@ -353,7 +336,6 @@ export default function SPTRD() {
 
     const satuanName = targetObyek?.tariftbl?.satuan?.satuan || "Unit";
 
-    // Minta input volume dengan satuan di sebelah kanan
     const { value: inputVolume, dismiss } = await Swal.fire({
       title: "Masukkan Volume",
       html: `
@@ -381,10 +363,16 @@ export default function SPTRD() {
     }
 
     const volume = parseFloat(inputVolume) || 1;
-    setPendingObyek(targetObyek);
-    setPendingVolume(volume);
-    setTempTtd("");
-    setShowTtdModal(true);
+
+    if (!hasTtd) {
+      setPendingObyek(targetObyek);
+      setPendingVolume(volume);
+      setTempTtd("");
+      setShowTtdModal(true);
+      return;
+    }
+
+    generateSptrdDocument(targetObyek, volume);
   };
 
   // CANVAS DRAWING HANDLERS
@@ -454,33 +442,69 @@ export default function SPTRD() {
     };
   };
 
-  const handleConfirmTtd = async () => {
+  const handleSaveTtdToProfile = async () => {
     if (!tempTtd) {
       Swal.fire({
         icon: "warning",
         title: "TTD Kosong",
-        text: "Silakan coret atau unggah TTD terlebih dahulu.",
+        text: "Silakan buat coretan atau upload TTD terlebih dahulu.",
       });
       return;
     }
 
-    setShowTtdModal(false);
-    const targetObyek = pendingObyek;
-    const volume = pendingVolume;
+    try {
+      const userId = wr?.id || wr?.npwrd || wr?.nik_npwp;
+      const userDocRef = doc(db, "users", String(userId));
+      const userSnap = await getDoc(userDocRef);
 
+      const payload = {
+        foto_ttd: tempTtd,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (userSnap.exists()) {
+        await updateDoc(userDocRef, payload);
+      } else {
+        payload.nama = wr?.nama || "";
+        payload.npwrd = wr?.npwrd || "";
+        payload.nik = wr?.nik_npwp || "";
+        payload.created_at = new Date().toISOString();
+        await setDoc(userDocRef, payload);
+      }
+
+      setHasTtd(true);
+      setShowTtdModal(false);
+      Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Tanda tangan berhasil disimpan ke data profil Anda.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      generateSptrdDocument(pendingObyek, pendingVolume);
+    } catch (err) {
+      console.error("Gagal menyimpan TTD ke profil:", err);
+      Swal.fire({ icon: "error", title: "Gagal", text: "Terjadi kesalahan saat menyimpan tanda tangan." });
+    }
+  };
+
+  const generateSptrdDocument = async (targetObyek, volume) => {
     const tarif = Number(targetObyek?.tariftbl?.tarif || 0);
     const nilaiRetribusi = volume * tarif;
 
     let ktpDataUrl = "";
+    let ttdDataUrl = "";
     try {
       const userId = wr?.id || wr?.npwrd || wr?.nik_npwp;
       const userDocRef = doc(db, "users", String(userId));
       const userSnap = await getDoc(userDocRef);
       if (userSnap.exists()) {
         ktpDataUrl = userSnap.data()?.foto_ktp || "";
+        ttdDataUrl = userSnap.data()?.foto_ttd || "";
       }
     } catch (err) {
-      console.error("Gagal mengambil data KTP untuk lampiran:", err);
+      console.error("Gagal mengambil data user dari database:", err);
     }
 
     const newFormData = {
@@ -511,7 +535,7 @@ export default function SPTRD() {
       nilaiRetribusi: nilaiRetribusi,
       kota: targetObyek?.kota?.kab_kota || "JAWA TENGAH",
       ktpUrl: ktpDataUrl,
-      ttdUrl: tempTtd,
+      ttdUrl: ttdDataUrl,
       qr: JSON.stringify({
         wr: wr?.npwrd,
         obyek: targetObyek?.id,
@@ -524,9 +548,6 @@ export default function SPTRD() {
     setShowPreviewModal(true);
   };
 
-  // =========================
-  // HANDLE SIMPAN KE FIREBASE DENGAN KONFIRMASI
-  // =========================
   const handleSaveToFirebase = async () => {
     const confirmResult = await Swal.fire({
       title: "Konfirmasi Permohonan",
@@ -539,29 +560,7 @@ export default function SPTRD() {
       cancelButtonColor: "#d33",
     });
 
-    if (confirmResult.isDismissed) {
-      const cancelResult = await Swal.fire({
-        title: "Batalkan Permohonan",
-        text: "Apakah anda yakin ingin membatalkan?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Ya",
-        cancelButtonText: "Tidak",
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-      });
-
-      if (cancelResult.isConfirmed) {
-        Swal.fire({
-          icon: "info",
-          title: "Dibatalkan",
-          text: "Permohonan dibatalkan.",
-          timer: 1500,
-          showConfirmButton: false,
-        });
-      }
-      return;
-    }
+    if (confirmResult.isDismissed) return;
 
     if (confirmResult.isConfirmed) {
       try {
@@ -585,9 +584,6 @@ export default function SPTRD() {
     }
   };
 
-  // =========================
-  // FETCH HISTORY DARI FIRESTORE
-  // =========================
   const handleOpenHistory = async () => {
     if (!wr?.nama) {
       Swal.fire({
@@ -671,23 +667,23 @@ export default function SPTRD() {
           </button>
         </div>
 
-        {/* NOTIFIKASI STATUS KTP */}
-        {!checkingKtp && (
-          <div className={`border-l-4 rounded-2xl p-6 shadow-md mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${hasKtp ? "bg-green-50 border-green-500" : "bg-amber-50 border-amber-500"}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${hasKtp ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}>
-                {hasKtp ? <CheckCircle size={24} /> : <AlertTriangle size={24} />}
+        {/* NOTIFIKASI STATUS KTP & TTD */}
+        {!checkingData && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className={`border-l-4 rounded-2xl p-5 shadow-md flex items-center justify-between gap-4 ${hasKtp ? "bg-green-50 border-green-500" : "bg-amber-50 border-amber-500"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl ${hasKtp ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}>
+                  {hasKtp ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
+                </div>
+                <div>
+                  <h4 className={`font-bold text-sm ${hasKtp ? "text-green-900" : "text-amber-900"}`}>
+                    {hasKtp ? "Dokumen KTP Lengkap" : "KTP Belum Diunggah"}
+                  </h4>
+                  <p className={`text-xs ${hasKtp ? "text-green-700" : "text-amber-700"}`}>
+                    {hasKtp ? "Siap dilampirkan otomatis." : "Wajib diunggah sebelum buat SPTRD."}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className={`font-bold text-base ${hasKtp ? "text-green-900" : "text-amber-900"}`}>
-                  {hasKtp ? "Informasi: Dokumen Data Diri Lengkap" : "Peringatan: Data Diri Belum Lengkap"}
-                </h3>
-                <p className={`text-sm ${hasKtp ? "text-green-700" : "text-amber-700"}`}>
-                  {hasKtp ? "Anda telah upload dokumen data diri. Dokumen KTP siap dilampirkan pada permohonan." : "Anda belum melakukan upload data diri (Foto/PDF KTP). Segera lengkapi untuk dapat mengajukan SPTRD."}
-                </p>
-              </div>
-            </div>
-            <div>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -698,10 +694,34 @@ export default function SPTRD() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingKtp}
-                className={`${hasKtp ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"} text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-md disabled:opacity-50`}
+                className={`${hasKtp ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"} text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md`}
               >
-                <Upload size={16} />
-                {uploadingKtp ? "Menyimpan..." : hasKtp ? "Perbarui KTP" : "Upload KTP"}
+                <Upload size={14} /> {hasKtp ? "Perbarui" : "Upload"}
+              </button>
+            </div>
+
+            <div className={`border-l-4 rounded-2xl p-5 shadow-md flex items-center justify-between gap-4 ${hasTtd ? "bg-green-50 border-green-500" : "bg-amber-50 border-amber-500"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl ${hasTtd ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}>
+                  {hasTtd ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
+                </div>
+                <div>
+                  <h4 className={`font-bold text-sm ${hasTtd ? "text-green-900" : "text-amber-900"}`}>
+                    {hasTtd ? "Tanda Tangan Tersimpan" : "Tanda Tangan Belum Ada"}
+                  </h4>
+                  <p className={`text-xs ${hasTtd ? "text-green-700" : "text-amber-700"}`}>
+                    {hasTtd ? "Tersimpan di profil akun Anda." : "Dibutuhkan untuk validasi dokumen."}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setTempTtd("");
+                  setShowTtdModal(true);
+                }}
+                className={`${hasTtd ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"} text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md`}
+              >
+                <PenTool size={14} /> {hasTtd ? "Ubah TTD" : "Buat TTD"}
               </button>
             </div>
           </div>
@@ -932,10 +952,10 @@ export default function SPTRD() {
                   Batal
                 </button>
                 <button
-                  onClick={handleConfirmTtd}
+                  onClick={handleSaveTtdToProfile}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md"
                 >
-                  Gunakan Tanda Tangan
+                  Simpan Tanda Tangan
                 </button>
               </div>
             </div>
@@ -969,7 +989,6 @@ export default function SPTRD() {
                 </div>
 
                 <div className="p-6 space-y-6">
-                  {/* SLIDER GAMBAR */}
                   <div className="relative w-full h-[320px] md:h-[400px] rounded-2xl overflow-hidden bg-slate-900 group">
                     {finalImages.length > 1 && (
                       <>
@@ -1003,7 +1022,6 @@ export default function SPTRD() {
                     </div>
                   </div>
 
-                  {/* THUMBNAILS */}
                   {finalImages.length > 1 && (
                     <div className="flex gap-3 overflow-x-auto pb-2">
                       {finalImages.map((img, idx) => (
@@ -1020,7 +1038,6 @@ export default function SPTRD() {
                     </div>
                   )}
 
-                  {/* INFO GRID */}
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
                       <h3 className="font-bold text-slate-800 text-base border-b pb-2">Informasi Umum</h3>
@@ -1073,7 +1090,6 @@ export default function SPTRD() {
                     </div>
                   </div>
 
-                  {/* INSTANSI PENGELOLA */}
                   <div className="bg-blue-50/60 rounded-2xl p-5 border border-blue-100">
                     <h3 className="font-bold text-slate-800 text-base mb-3">Instansi Pengelola</h3>
                     <div className="grid md:grid-cols-3 gap-4 text-sm">
@@ -1092,7 +1108,6 @@ export default function SPTRD() {
                     </div>
                   </div>
 
-                  {/* GOOGLE MAPS */}
                   {lat && lng && (
                     <div className="bg-gray-50 rounded-2xl p-5">
                       <h3 className="font-bold text-slate-800 text-base mb-3 flex items-center gap-2">
@@ -1134,7 +1149,7 @@ export default function SPTRD() {
           );
         })()}
 
-        {/* MODAL RIWAYAT (HISTORY) CARD LIST */}
+        {/* MODAL RIWAYAT (HISTORY) */}
         {showHistoryModal && (
           <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
@@ -1209,7 +1224,7 @@ export default function SPTRD() {
           </div>
         )}
 
-        {/* MODAL PREVIEW SPTRD (DENGAN 2 LEMBAR) */}
+        {/* MODAL PREVIEW SPTRD (DENGAN KOP SURAT & TTD TENGAH) */}
         {showPreviewModal && (
           <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
             <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-lg p-4 flex justify-center gap-3 print:hidden">
@@ -1233,6 +1248,8 @@ export default function SPTRD() {
               
               {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
               <div id="sptrd-document" className="sptrd-paper-jtg">
+                
+                {/* KOP SURAT (DIKOREKSI AGAR CENTER SIMETRIS) */}
                 <div className="header-jtg">
                   <img
                     src="/images/logo-jateng-official.png"
@@ -1309,18 +1326,16 @@ export default function SPTRD() {
                   </p>
                 </div>
 
-                <div className="signature-jtg">
-                  <div></div>
-                  <div className="signature-right">
-                    <p>{formData.alamat}, {formData.tanggal}</p>
-                    <p>Wajib Retribusi / Kuasa</p>
-                    <div className="ttd-space-jtg flex items-center justify-center">
-                      {formData.ttdUrl ? (
-                        <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
-                      ) : null}
-                    </div>
-                    <p className="font-bold underline">{formData.nama}</p>
+                {/* TANDA TANGAN (POSISI DI TENGAH SESUAI PERMINTAAN) */}
+                <div className="signature-jtg-center">
+                  <p>{formData.kota ? formData.kota.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
+                  <p>Wajib Retribusi / Kuasa</p>
+                  <div className="ttd-space-jtg flex items-center justify-center">
+                    {formData.ttdUrl ? (
+                      <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
+                    ) : null}
                   </div>
+                  <p className="font-bold underline">{formData.nama}</p>
                 </div>
 
                 <div className="footer-note">
@@ -1399,11 +1414,15 @@ export default function SPTRD() {
         }
         .header-jtg {
           display: flex;
-          align-items: flex-start;
+          align-items: center;
+          position: relative;
+          padding-left: 80px;
+          margin-bottom: 5px;
         }
         .logo-jtg {
           width: 70px;
-          margin-right: 15px;
+          position: absolute;
+          left: 0;
         }
         .header-center {
           flex: 1;
@@ -1413,15 +1432,20 @@ export default function SPTRD() {
           margin: 0;
           font-size: 18px;
           font-weight: bold;
+          letter-spacing: 0.5px;
         }
         .header-center h3 {
-          margin: 3px 0;
+          margin: 2px 0;
           font-size: 15px;
+          font-weight: bold;
+        }
+        .header-center div {
+          font-size: 13px;
         }
         .header-line {
           border-bottom: 4px solid #000;
           margin-top: 10px;
-          margin-bottom: 10px;
+          margin-bottom: 15px;
         }
         .title-jtg {
           text-align: center;
@@ -1470,17 +1494,16 @@ export default function SPTRD() {
           margin-top: 15px;
           line-height: 1.5;
         }
-        .signature-jtg {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 40px;
-        }
-        .signature-right {
-          text-align: left;
-          width: 250px;
+        .signature-jtg-center {
+          width: 280px;
+          margin-left: auto;
+          margin-right: 0;
+          text-align: center;
+          margin-top: 35px;
         }
         .ttd-space-jtg {
           height: 60px;
+          margin: 5px 0;
         }
         .footer-note {
           margin-top: 20px;
