@@ -656,40 +656,19 @@ export default function SPTRD() {
     window.print();
   };
 
- const handleDownloadPDF = async () => {
-    const html2pdf = (await import("html2pdf.js")).default;
-    
-    // Ambil elemen lembar 1 dan lembar 2 secara spesifik
-    const page1 = document.getElementById("sptrd-document");
-    const page2 = page1.nextElementSibling; // Mengambil elemen lembar KTP berikutnya
-
-    const opt = {
-      margin: 0,
-      filename: `SPTRD-${formData.nomor}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
-        scrollY: 0
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    };
-
-    // Render halaman pertama, lalu tambahkan halaman kedua secara chaining
-    html2pdf()
-      .set(opt)
-      .from(page1)
-      .toPdf()
-      .get('pdf')
-      .then(async (pdf) => {
-        pdf.addPage();
-        // Render halaman kedua ke halaman baru PDF
-        const canvas2 = await html2pdf().set(opt).from(page2).output('canvas');
-        const imgData2 = canvas2.toDataURL('image/jpeg', 0.98);
-        pdf.addImage(imgData2, 'JPEG', 0, 0, 210, 297);
-        pdf.save(`SPTRD-${formData.nomor}.pdf`);
+ const handleDownloadPDF = () => {
+    // Memastikan data form ada sebelum dicetak
+    if (!formData.nomor) {
+      Swal.fire({
+        icon: "warning",
+        title: "Data Kosong",
+        text: "Silakan pilih obyek dan buat preview SPTRD terlebih dahulu.",
       });
+      return;
+    }
+
+    // Membuka jendela dialog print di mana pengguna bisa memilih "Save as PDF"
+    window.print();
   };
 
   return (
