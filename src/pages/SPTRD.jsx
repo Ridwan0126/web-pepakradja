@@ -1494,9 +1494,9 @@ export default function SPTRD() {
         }
         .document-footer-info {
           border-top: 1px solid #cbd5e1;
-          margin-top: 10px;
-          padding-top: 6px;
-          font-size: 10px;
+          margin-top: 4px;
+          padding-top: 3px;
+          font-size: 8px;
           color: #64748b;
           display: flex;
           justify-content: space-between;
