@@ -696,7 +696,7 @@ export default function SPTRD() {
           </div>
           <button
             onClick={handleOpenHistory}
-            className="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all border border-white/30 shadow-lg backdrop-blur-md"
+            className="bg-white/25 hover:bg-white/35 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all border border-white/30 shadow-lg backdrop-blur-md"
           >
             <History size={20} /> Riwayat SPTRD
           </button>
@@ -1618,9 +1618,9 @@ export default function SPTRD() {
           }
           .preview-scroll-container {
             display: block !important;
-            position: relative !important;
-            left: auto !important;
-            top: auto !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
             overflow: visible !important;
@@ -1629,9 +1629,9 @@ export default function SPTRD() {
           }
           .sptrd-paper-jtg {
             width: 210mm !important;
-            height: 297mm !important;
+            height: auto !important;
             min-height: 297mm !important;
-            max-height: 297mm !important;
+            max-height: none !important;
             box-shadow: none !important;
             margin: 0 !important;
             padding: 12mm 18mm 10mm 18mm !important;
@@ -1641,7 +1641,7 @@ export default function SPTRD() {
             break-after: page !important;
             transform: none !important;
             position: relative !important;
-            overflow: hidden !important;
+            overflow: visible !important;
           }
           .sptrd-paper-jtg:first-child {
             page-break-before: avoid !important;
