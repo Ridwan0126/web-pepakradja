@@ -1288,7 +1288,7 @@ export default function SPTRD() {
           <div id="sptrd-full-container" className="preview-scroll-container py-6 gap-6 print:p-0 print:gap-0 print:overflow-visible">
             
             {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
-            <div id="sptrd-document" className="sptrd-paper-jtg">
+            <div id="sptrd-document" className="sptrd-paper-jtg sptrd-page-1">
               
               <div>
                 {/* KOP SURAT */}
@@ -1389,7 +1389,7 @@ export default function SPTRD() {
             </div>
 
             {/* LEMBAR 2: LAMPIRAN FOTO/PDF KTP */}
-            <div className="sptrd-paper-jtg page-break-before">
+            <div className="sptrd-paper-jtg sptrd-page-2">
               <div>
                 <div className="text-center mb-6 border-b pb-4">
                   <h2 className="text-lg font-bold">LAMPIRAN DOKUMEN IDENTITAS (KTP)</h2>
@@ -1504,10 +1504,6 @@ export default function SPTRD() {
           justify-content: space-between;
           align-items: center;
           width: 100%;
-        }
-        .page-break-before {
-          page-break-before: always;
-          break-before: page;
         }
         .header-jtg {
           display: flex;
@@ -1629,23 +1625,25 @@ export default function SPTRD() {
           }
           .sptrd-paper-jtg {
             width: 210mm !important;
-            height: auto !important;
+            height: 297mm !important;
             min-height: 297mm !important;
-            max-height: none !important;
+            max-height: 297mm !important;
             box-shadow: none !important;
             margin: 0 !important;
             padding: 12mm 18mm 10mm 18mm !important;
-            page-break-before: always !important;
-            break-before: page !important;
-            page-break-after: always !important;
-            break-after: page !important;
             transform: none !important;
             position: relative !important;
-            overflow: visible !important;
+            overflow: hidden !important;
+            page-break-after: always !important;
+            break-after: page !important;
           }
-          .sptrd-paper-jtg:first-child {
+          .sptrd-page-1 {
             page-break-before: avoid !important;
             break-before: avoid !important;
+          }
+          .sptrd-page-2 {
+            page-break-before: always !important;
+            break-before: page !important;
           }
         }
       `}</style>
