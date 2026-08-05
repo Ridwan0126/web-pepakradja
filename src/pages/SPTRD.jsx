@@ -1618,9 +1618,9 @@ export default function SPTRD() {
           }
           .preview-scroll-container {
             display: block !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
             padding: 0 !important;
             margin: 0 !important;
             overflow: visible !important;
@@ -1639,8 +1639,6 @@ export default function SPTRD() {
             break-before: page !important;
             page-break-after: always !important;
             break-after: page !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
             transform: none !important;
             position: relative !important;
             overflow: hidden !important;
