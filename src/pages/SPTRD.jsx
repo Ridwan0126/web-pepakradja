@@ -1481,7 +1481,6 @@ export default function SPTRD() {
           flex-direction: column;
           justify-content: space-between;
           position: relative;
-          flex-shrink: 0;
           box-sizing: border-box;
           overflow: hidden;
         }
@@ -1505,6 +1504,7 @@ export default function SPTRD() {
         }
         .page-break-before {
           page-break-before: always;
+          break-before: page;
         }
         .header-jtg {
           display: flex;
@@ -1592,8 +1592,16 @@ export default function SPTRD() {
           line-height: 1.35;
         }
         @media print {
-          body {
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+          body, html {
             background: white !important;
+            width: 210mm;
+            height: 297mm;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           .print\:hidden {
             display: none !important;
@@ -1604,6 +1612,7 @@ export default function SPTRD() {
             margin: 0 !important;
             overflow: visible !important;
             gap: 0 !important;
+            background: white !important;
           }
           .sptrd-paper-jtg {
             width: 210mm !important;
@@ -1611,13 +1620,17 @@ export default function SPTRD() {
             max-height: 297mm !important;
             box-shadow: none !important;
             margin: 0 !important;
-            padding: 10mm 15mm 10mm 15mm !important;
+            padding: 12mm 18mm 10mm 18mm !important;
             page-break-after: always !important;
+            break-after: page !important;
             page-break-inside: avoid !important;
+            break-inside: avoid !important;
             transform: none !important;
+            position: relative !important;
           }
           .sptrd-paper-jtg:last-child {
             page-break-after: avoid !important;
+            break-after: avoid !important;
           }
         }
       `}</style>
