@@ -1585,33 +1585,31 @@ export default function SPTRD() {
           line-height: 1.35;
         }
         @media print {
-          body * {
-            visibility: hidden;
-          }
-          #sptrd-full-container,
-          #sptrd-full-container * {
-            visibility: visible;
-          }
-          #sptrd-full-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-          .sptrd-paper-jtg {
-            position: relative;
-            width: 210mm;
-            height: 297mm;
-            max-height: 297mm;
-            overflow: hidden;
-            box-shadow: none;
-            page-break-after: always;
-            transform: none !important;
-            margin-bottom: 0 !important;
-            padding: 10mm 15mm 10mm 15mm;
+          body {
+            background: white !important;
           }
           .print\:hidden {
             display: none !important;
+          }
+          .preview-scroll-container {
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+          }
+          .sptrd-paper-jtg {
+            width: 210mm !important;
+            height: 297mm !important;
+            max-height: 297mm !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 10mm 15mm 10mm 15mm !important;
+            page-break-after: always !important;
+            page-break-inside: avoid !important;
+            transform: none !important;
+          }
+          .sptrd-paper-jtg:last-child {
+            page-break-after: avoid !important;
           }
         }
       `}</style>
