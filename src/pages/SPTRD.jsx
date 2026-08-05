@@ -1278,92 +1278,94 @@ export default function SPTRD() {
               {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
               <div id="sptrd-document" className="sptrd-paper-jtg">
                 
-                {/* KOP SURAT */}
-                <div className="header-jtg">
-                  <img
-                    src="/images/logo-jateng-official.png"
-                    alt="logo"
-                    className="logo-jtg"
-                  />
-                  <div className="header-center">
-                    <h2>PEMERINTAH PROVINSI JAWA TENGAH</h2>
-                    <h3>{formData.opd}</h3>
-                    <div>{formData.uppd}</div>
+                <div>
+                  {/* KOP SURAT */}
+                  <div className="header-jtg">
+                    <img
+                      src="/images/logo-jateng-official.png"
+                      alt="logo"
+                      className="logo-jtg"
+                    />
+                    <div className="header-center">
+                      <h2>PEMERINTAH PROVINSI JAWA TENGAH</h2>
+                      <h3>{formData.opd}</h3>
+                      <div>{formData.uppd}</div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="header-line"></div>
+                  <div className="header-line"></div>
 
-                <h1 className="title-jtg">
-                  SURAT PEMBERITAHUAN RETRIBUSI DAERAH (SPTRD)
-                </h1>
+                  <h1 className="title-jtg">
+                    SURAT PEMBERITAHUAN RETRIBUSI DAERAH (SPTRD)
+                  </h1>
 
-                <div className="tujuan-box">
-                  <p>Kepada Yth:</p>
-                  <p>Kepala {formData.opd}</p>
-                  <p>Di</p>
-                  <p>TEMPAT</p>
-                </div>
-
-                <p className="intro-text">Yang bertanda tangan dibawah ini, kami:</p>
-
-                <div className="section-jtg">
-                  <div className="section-title-jtg">I. Identitas Wajib Retribusi :</div>
-                  <table className="table-jtg">
-                    <tbody>
-                      <tr><td>Nama</td><td>:</td><td>{formData.nama}</td></tr>
-                      <tr><td>Alamat</td><td>:</td><td>{formData.alamat}</td></tr>
-                      <tr><td>Nomor Induk Kependudukan</td><td>:</td><td>{formData.nik}</td></tr>
-                      <tr><td>Nomor Induk Berusaha</td><td>:</td><td>{formData.npwrd}</td></tr>
-                      <tr><td>Nomor Telepon</td><td>:</td><td>{formData.telepon}</td></tr>
-                      <tr><td>Alamat Surat Elektronik</td><td>:</td><td>{formData.email}</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="section-jtg">
-                  <div className="section-title-jtg">II. Pelayanan Retribusi yang dimohon:</div>
-                  <table className="table-jtg">
-                    <tbody>
-                      <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
-                      <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
-                      <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek} ( {formData.idgen} )</td></tr>
-                      <tr><td>Uraian Deskripsi</td><td>:</td><td>{formData.keterangan}</td></tr>
-                      <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
-                      <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
-                      <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} {formData.satuan} × Rp {rupiah(formData.tarif)})</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="section-jtg">
-                  <div className="section-title-jtg">III. Jangka waktu Retribusi :</div>
-                  <div className="lampiran-jtg">
-                    <p>Sebagai bahan pertimbangan, berikut kami lampirkan :</p>
-                    <p>a. Fotokopi KTP;</p>
-                    <p>b. Fotokopi NIB bagi Wajib Retribusi Badan Usaha;</p>
-                    <p>c. Surat Kuasa bagi Wajib Retribusi yang tidak menandatangani SPTRD sendiri.</p>
+                  <div className="tujuan-box">
+                    <p>Kepada Yth:</p>
+                    <p>Kepala {formData.opd}</p>
+                    <p>Di</p>
+                    <p>TEMPAT</p>
                   </div>
-                </div>
 
-                <div className="pernyataan-jtg">
-                  <p>
-                    Apabila permohonan dikabulkan kami sanggup membayar Retribusi serta menanggung sanksi administratif atas keterlambatan pembayaran Retribusi sesuai ketentuan peraturan perundang-undangan yang berlaku atas kuasa saya.
-                  </p>
-                  <p>
-                    Saya menyatakan bahwa yang kami beritahukan tersebut beserta lampirannya benar, lengkap dan jelas.
-                  </p>
-                </div>
+                  <p className="intro-text">Yang bertanda tangan dibawah ini, kami:</p>
 
-                <div className="signature-jtg-center">
-                  <p>{formData.alamat ? formData.alamat.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
-                  <p>Wajib Retribusi</p>
-                  <div className="ttd-space-jtg flex items-center justify-center">
-                    {formData.ttdUrl ? (
-                      <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
-                    ) : null}
+                  <div className="section-jtg">
+                    <div className="section-title-jtg">I. Identitas Wajib Retribusi :</div>
+                    <table className="table-jtg">
+                      <tbody>
+                        <tr><td>Nama</td><td>:</td><td>{formData.nama}</td></tr>
+                        <tr><td>Alamat</td><td>:</td><td>{formData.alamat}</td></tr>
+                        <tr><td>Nomor Induk Kependudukan</td><td>:</td><td>{formData.nik}</td></tr>
+                        <tr><td>Nomor Induk Berusaha</td><td>:</td><td>{formData.npwrd}</td></tr>
+                        <tr><td>Nomor Telepon</td><td>:</td><td>{formData.telepon}</td></tr>
+                        <tr><td>Alamat Surat Elektronik</td><td>:</td><td>{formData.email}</td></tr>
+                      </tbody>
+                    </table>
                   </div>
-                  <p className="font-bold underline">{formData.nama}</p>
+
+                  <div className="section-jtg">
+                    <div className="section-title-jtg">II. Pelayanan Retribusi yang dimohon:</div>
+                    <table className="table-jtg">
+                      <tbody>
+                        <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
+                        <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
+                        <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek} ( {formData.idgen} )</td></tr>
+                        <tr><td>Uraian Deskripsi</td><td>:</td><td>{formData.keterangan}</td></tr>
+                        <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
+                        <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
+                        <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} {formData.satuan} × Rp {rupiah(formData.tarif)})</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="section-jtg">
+                    <div className="section-title-jtg">III. Jangka waktu Retribusi :</div>
+                    <div className="lampiran-jtg">
+                      <p>Sebagai bahan pertimbangan, berikut kami lampirkan :</p>
+                      <p>a. Fotokopi KTP;</p>
+                      <p>b. Fotokopi NIB bagi Wajib Retribusi Badan Usaha;</p>
+                      <p>c. Surat Kuasa bagi Wajib Retribusi yang tidak menandatangani SPTRD sendiri.</p>
+                    </div>
+                  </div>
+
+                  <div className="pernyataan-jtg">
+                    <p>
+                      Apabila permohonan dikabulkan kami sanggup membayar Retribusi serta menanggung sanksi administratif atas keterlambatan pembayaran Retribusi sesuai ketentuan peraturan perundang-undangan yang berlaku atas kuasa saya.
+                    </p>
+                    <p>
+                      Saya menyatakan bahwa yang kami beritahukan tersebut beserta lampirannya benar, lengkap dan jelas.
+                    </p>
+                  </div>
+
+                  <div className="signature-jtg-center">
+                    <p>{formData.alamat ? formData.alamat.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
+                    <p>Wajib Retribusi</p>
+                    <div className="ttd-space-jtg flex items-center justify-center">
+                      {formData.ttdUrl ? (
+                        <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
+                      ) : null}
+                    </div>
+                    <p className="font-bold underline">{formData.nama}</p>
+                  </div>
                 </div>
 
                 {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 1 */}
@@ -1376,38 +1378,40 @@ export default function SPTRD() {
 
               {/* LEMBAR 2: LAMPIRAN FOTO/PDF KTP */}
               <div className="sptrd-paper-jtg page-break-before">
-                <div className="text-center mb-6 border-b pb-4">
-                  <h2 className="text-lg font-bold">LAMPIRAN DOKUMEN IDENTITAS (KTP)</h2>
-                  <p className="text-xs text-gray-600">Wajib Retribusi: {formData.nama} ({formData.nik})</p>
-                </div>
+                <div>
+                  <div className="text-center mb-6 border-b pb-4">
+                    <h2 className="text-lg font-bold">LAMPIRAN DOKUMEN IDENTITAS (KTP)</h2>
+                    <p className="text-xs text-gray-600">Wajib Retribusi: {formData.nama} ({formData.nik})</p>
+                  </div>
 
-                <div className="flex flex-col items-center justify-center h-[75%]">
-                  {formData.ktpUrl ? (
-                    formData.ktpUrl.startsWith("data:application/pdf") ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center border rounded-xl p-4 bg-gray-50">
-                        <FileText size={64} className="text-blue-600 mb-2" />
-                        <p className="font-semibold text-sm">Dokumen KTP berformat PDF</p>
-                        <a 
-                          href={formData.ktpUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
-                        >
-                          Buka / Unduh File PDF
-                        </a>
-                      </div>
+                  <div className="flex flex-col items-center justify-center py-6">
+                    {formData.ktpUrl ? (
+                      formData.ktpUrl.startsWith("data:application/pdf") ? (
+                        <div className="w-full flex flex-col items-center justify-center border rounded-xl p-6 bg-gray-50">
+                          <FileText size={64} className="text-blue-600 mb-2" />
+                          <p className="font-semibold text-sm">Dokumen KTP berformat PDF</p>
+                          <a 
+                            href={formData.ktpUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
+                          >
+                            Buka / Unduh File PDF
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="max-w-full max-h-[600px] border rounded-xl overflow-hidden shadow-md bg-white p-2">
+                          <img 
+                            src={formData.ktpUrl} 
+                            alt="Lampiran KTP" 
+                            className="max-w-full max-h-[550px] object-contain mx-auto" 
+                          />
+                        </div>
+                      )
                     ) : (
-                      <div className="max-w-full max-h-[650px] border rounded-xl overflow-hidden shadow-md bg-white p-2">
-                        <img 
-                          src={formData.ktpUrl} 
-                          alt="Lampiran KTP" 
-                          className="max-w-full max-h-[600px] object-contain mx-auto" 
-                        />
-                      </div>
-                    )
-                  ) : (
-                    <p className="text-gray-500 italic">Tidak ada dokumen KTP yang ditemukan.</p>
-                  )}
+                      <p className="text-gray-500 italic">Tidak ada dokumen KTP yang ditemukan.</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 2 */}
@@ -1442,11 +1446,11 @@ export default function SPTRD() {
           margin-left: auto;
           margin-right: 0;
           text-align: center;
-          margin-top: 25px;
+          margin-top: 20px;
         }
         .ttd-space-jtg {
-          height: 50px;
-          margin: 3px 0;
+          height: 45px;
+          margin: 2px 0;
         }
         .preview-scroll-container {
           width: 100%;
@@ -1454,16 +1458,16 @@ export default function SPTRD() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 10px;
+          padding: 20px 10px;
           -webkit-overflow-scrolling: touch;
         }
         .sptrd-paper-jtg {
           width: 210mm;
           min-height: 297mm;
           background: white;
-          padding: 15mm 18mm 12mm 18mm;
+          padding: 12mm 18mm 10mm 18mm;
           font-family: "Times New Roman", serif;
-          font-size: 12px;
+          font-size: 11.5px;
           color: #000;
           box-shadow: 0 10px 25px rgba(0,0,0,0.2);
           display: flex;
@@ -1472,17 +1476,18 @@ export default function SPTRD() {
           position: relative;
           flex-shrink: 0;
           box-sizing: border-box;
+          margin-bottom: 20px;
         }
         @media (max-width: 768px) {
           .sptrd-paper-jtg {
-            transform: scale(0.65);
+            transform: scale(0.6);
             transform-origin: top center;
-            margin-bottom: -110mm;
+            margin-bottom: -120mm;
           }
         }
         .document-footer-info {
           border-top: 1px solid #cbd5e1;
-          margin-top: 15px;
+          margin-top: 10px;
           padding-top: 6px;
           font-size: 10px;
           color: #64748b;
@@ -1503,80 +1508,81 @@ export default function SPTRD() {
           margin-bottom: 5px;
         }
         .logo-jtg {
-          width: 70px;
+          width: 65px;
           position: absolute;
           left: 10px;
         }
         .header-center {
           flex: 1;
           text-align: center;
-          padding: 0 80px;
+          padding: 0 70px;
         }
         .header-center h2 {
           margin: 0;
-          font-size: 18px;
+          font-size: 16px;
           font-weight: bold;
           letter-spacing: 0.5px;
         }
         .header-center h3 {
           margin: 2px 0;
-          font-size: 15px;
+          font-size: 14px;
           font-weight: bold;
         }
         .header-center div {
-          font-size: 13px;
+          font-size: 12px;
         }
         .header-line {
-          border-bottom: 4px solid #000;
-          margin-top: 8px;
-          margin-bottom: 12px;
+          border-bottom: 3px solid #000;
+          margin-top: 6px;
+          margin-bottom: 10px;
         }
         .title-jtg {
           text-align: center;
-          font-size: 15px;
+          font-size: 14px;
           font-weight: bold;
-          margin-bottom: 20px;
-        }
-        .tujuan-box {
-          width: 250px;
-          margin-left: auto;
-          text-align: left;
           margin-bottom: 15px;
         }
+        .tujuan-box {
+          width: 230px;
+          margin-left: auto;
+          text-align: left;
+          margin-bottom: 12px;
+          font-size: 11.5px;
+        }
         .tujuan-box p {
-          margin: 2px 0;
+          margin: 1px 0;
         }
         .intro-text {
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
         .section-jtg {
-          margin-bottom: 12px;
+          margin-bottom: 10px;
         }
         .section-title-jtg {
           font-weight: bold;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
         }
         .table-jtg {
           width: 100%;
           border-collapse: collapse;
         }
         .table-jtg td {
-          padding: 2px 0;
+          padding: 1.5px 0;
           vertical-align: top;
         }
         .table-jtg td:first-child {
-          width: 220px;
+          width: 210px;
         }
         .table-jtg td:nth-child(2) {
-          width: 20px;
+          width: 15px;
         }
         .lampiran-jtg p {
-          margin: 2px 0;
+          margin: 1px 0;
         }
         .pernyataan-jtg {
           text-align: justify;
-          margin-top: 10px;
-          line-height: 1.4;
+          margin-top: 8px;
+          line-height: 1.35;
         }
         @media print {
           body * {
@@ -1595,11 +1601,14 @@ export default function SPTRD() {
           .sptrd-paper-jtg {
             position: relative;
             width: 210mm;
-            min-height: 297mm;
+            height: 297mm;
+            max-height: 297mm;
+            overflow: hidden;
             box-shadow: none;
             page-break-after: always;
             transform: none !important;
             margin-bottom: 0 !important;
+            padding: 10mm 15mm 10mm 15mm;
           }
           .print\:hidden {
             display: none !important;
