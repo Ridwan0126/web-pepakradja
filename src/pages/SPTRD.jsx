@@ -504,10 +504,18 @@ export default function SPTRD() {
       console.error("Gagal mengambil data user dari database:", err);
     }
 
+    const now = new Date();
+    const printInfo = {
+      user: wr?.nama || "Guest",
+      date: formatDate(now),
+      time: now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      url: typeof window !== "undefined" ? window.location.href : "-"
+    };
+
     const newFormData = {
       nomor: `SPTRD-${Date.now()}`,
-      tanggal: formatDate(new Date()),
-      timestamp: new Date().toISOString(),
+      tanggal: formatDate(now),
+      timestamp: now.toISOString(),
       userId: String(wr?.id || wr?.npwrd || wr?.nik_npwp),
       nama: wr?.nama || "-",
       alamat: wr?.alamat || "-",
@@ -533,6 +541,7 @@ export default function SPTRD() {
       kota: targetObyek?.kota?.kab_kota || "JAWA TENGAH",
       ktpUrl: ktpDataUrl,
       ttdUrl: ttdDataUrl,
+      printInfo: printInfo,
       qr: JSON.stringify({
         wr: wr?.npwrd,
         obyek: targetObyek?.id,
@@ -1268,7 +1277,7 @@ export default function SPTRD() {
               {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
               <div id="sptrd-document" className="sptrd-paper-jtg">
                 
-                {/* KOP SURAT (DIPERBAIKI POSISINYA) */}
+                {/* KOP SURAT */}
                 <div className="header-jtg">
                   <img
                     src="/images/logo-jateng-official.png"
@@ -1345,7 +1354,7 @@ export default function SPTRD() {
                   </p>
                 </div>
 
-               <div className="signature-jtg-center">
+                <div className="signature-jtg-center">
                   <p>{formData.alamat ? formData.alamat.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
                   <p>Wajib Retribusi</p>
                   <div className="ttd-space-jtg flex items-center justify-center">
@@ -1356,9 +1365,12 @@ export default function SPTRD() {
                   <p className="font-bold underline">{formData.nama}</p>
                 </div>
 
-                {/* <div className="footer-note">
-                  <span>*Coret yang tidak perlu</span>
-                </div> */}
+                {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 1 */}
+                <div className="document-footer-info">
+                  <span>Dicetak oleh: <strong>{formData.printInfo?.user}</strong></span>
+                  <span>Waktu: <strong>{formData.printInfo?.date} - {formData.printInfo?.time}</strong></span>
+                  <span>Situs: <a href={formData.printInfo?.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">{formData.printInfo?.url}</a></span>
+                </div>
               </div>
 
               {/* LEMBAR 2: LAMPIRAN FOTO/PDF KTP */}
@@ -1368,7 +1380,7 @@ export default function SPTRD() {
                   <p className="text-xs text-gray-600">Wajib Retribusi: {formData.nama} ({formData.nik})</p>
                 </div>
 
-                <div className="flex flex-col items-center justify-center h-[80%]">
+                <div className="flex flex-col items-center justify-center h-[75%]">
                   {formData.ktpUrl ? (
                     formData.ktpUrl.startsWith("data:application/pdf") ? (
                       <div className="w-full h-full flex flex-col items-center justify-center border rounded-xl p-4 bg-gray-50">
@@ -1384,17 +1396,24 @@ export default function SPTRD() {
                         </a>
                       </div>
                     ) : (
-                      <div className="max-w-full max-h-[700px] border rounded-xl overflow-hidden shadow-md bg-white p-2">
+                      <div className="max-w-full max-h-[650px] border rounded-xl overflow-hidden shadow-md bg-white p-2">
                         <img 
                           src={formData.ktpUrl} 
                           alt="Lampiran KTP" 
-                          className="max-w-full max-h-[650px] object-contain mx-auto" 
+                          className="max-w-full max-h-[600px] object-contain mx-auto" 
                         />
                       </div>
                     )
                   ) : (
                     <p className="text-gray-500 italic">Tidak ada dokumen KTP yang ditemukan.</p>
                   )}
+                </div>
+
+                {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 2 */}
+                <div className="document-footer-info">
+                  <span>Dicetak oleh: <strong>{formData.printInfo?.user}</strong></span>
+                  <span>Waktu: <strong>{formData.printInfo?.date} - {formData.printInfo?.time}</strong></span>
+                  <span>Situs: <a href={formData.printInfo?.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">{formData.printInfo?.url}</a></span>
                 </div>
               </div>
 
@@ -1417,26 +1436,41 @@ export default function SPTRD() {
           cursor: pointer;
           font-weight: 600;
         }
-          .signature-jtg-center {
+        .signature-jtg-center {
           width: 280px;
           margin-left: auto;
           margin-right: 0;
           text-align: center;
-          margin-top: 35px;
+          margin-top: 25px;
         }
         .ttd-space-jtg {
-          height: 60px;
-          margin: 5px 0;
+          height: 50px;
+          margin: 3px 0;
         }
         .sptrd-paper-jtg {
           width: 210mm;
           min-height: 297mm;
           background: white;
-          padding: 18mm;
+          padding: 15mm 18mm 12mm 18mm;
           font-family: "Times New Roman", serif;
           font-size: 12px;
           color: #000;
           box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          position: relative;
+        }
+        .document-footer-info {
+          border-top: 1px solid #cbd5e1;
+          margin-top: 15px;
+          padding-top: 6px;
+          font-size: 10px;
+          color: #64748b;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
         }
         .page-break-before {
           page-break-before: always;
@@ -1475,33 +1509,33 @@ export default function SPTRD() {
         }
         .header-line {
           border-bottom: 4px solid #000;
-          margin-top: 10px;
-          margin-bottom: 15px;
+          margin-top: 8px;
+          margin-bottom: 12px;
         }
         .title-jtg {
           text-align: center;
           font-size: 15px;
           font-weight: bold;
-          margin-bottom: 25px;
+          margin-bottom: 20px;
         }
         .tujuan-box {
           width: 250px;
           margin-left: auto;
           text-align: left;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
         }
         .tujuan-box p {
           margin: 2px 0;
         }
         .intro-text {
-          margin-bottom: 12px;
+          margin-bottom: 10px;
         }
         .section-jtg {
-          margin-bottom: 15px;
+          margin-bottom: 12px;
         }
         .section-title-jtg {
           font-weight: bold;
-          margin-bottom: 5px;
+          margin-bottom: 4px;
         }
         .table-jtg {
           width: 100%;
@@ -1518,31 +1552,12 @@ export default function SPTRD() {
           width: 20px;
         }
         .lampiran-jtg p {
-          margin: 3px 0;
+          margin: 2px 0;
         }
         .pernyataan-jtg {
           text-align: justify;
-          margin-top: 15px;
-          line-height: 1.5;
-        }
-        .signature-jtg {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 40px;
-        }
-        .signature-right {
-          text-align: left;
-          width: 250px;
-        }
-        .ttd-space-jtg {
-          height: 60px;
-          margin: 5px 0;
-        }
-        .footer-note {
-          margin-top: 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: end;
+          margin-top: 10px;
+          line-height: 1.4;
         }
         @media print {
           body * {
