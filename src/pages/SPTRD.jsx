@@ -1438,7 +1438,7 @@ export default function SPTRD() {
         </div>
       )}
 
-      <style jsx>{`
+     <style jsx>{`
         .btn-action {
           color: white;
           border: none;
@@ -1473,8 +1473,7 @@ export default function SPTRD() {
         }
         .sptrd-paper-jtg {
           width: 210mm;
-          height: 297mm;
-          max-height: 297mm;
+          min-height: 297mm;
           background: white;
           padding: 12mm 18mm 10mm 18mm;
           font-family: "Times New Roman", serif;
@@ -1487,7 +1486,6 @@ export default function SPTRD() {
           position: relative;
           flex-shrink: 0;
           box-sizing: border-box;
-          overflow: hidden;
         }
         @media (max-width: 768px) {
           .sptrd-paper-jtg {
@@ -1632,6 +1630,7 @@ export default function SPTRD() {
           .sptrd-paper-jtg {
             width: 210mm !important;
             height: 297mm !important;
+            min-height: 297mm !important;
             max-height: 297mm !important;
             box-shadow: none !important;
             margin: 0 !important;
@@ -1644,14 +1643,11 @@ export default function SPTRD() {
             break-inside: avoid !important;
             transform: none !important;
             position: relative !important;
+            overflow: hidden !important;
           }
           .sptrd-paper-jtg:first-child {
             page-break-before: avoid !important;
             break-before: avoid !important;
-          }
-          .sptrd-paper-jtg:last-child {
-            page-break-after: avoid !important;
-            break-after: avoid !important;
           }
         }
       `}</style>
