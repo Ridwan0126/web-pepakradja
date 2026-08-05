@@ -679,9 +679,11 @@ export default function SPTRD() {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans antialiased tracking-tight">
-      <Header />
+      <div className="print:hidden">
+        <Header />
+      </div>
 
-      <div className="pt-32 pb-20 max-w-7xl mx-auto px-4">
+      <div className="pt-32 pb-20 max-w-7xl mx-auto px-4 print:hidden">
         {/* INFO & TOMBOL HISTORY */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
@@ -1256,183 +1258,185 @@ export default function SPTRD() {
             </div>
           </div>
         )}
-
-        {/* MODAL PREVIEW SPTRD */}
-        {showPreviewModal && (
-          <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
-            <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-lg p-3 flex flex-wrap justify-center gap-2 print:hidden shadow-md">
-              {!isFromHistory && (
-                <button onClick={handleSaveToFirebase} className="btn-action bg-emerald-600 hover:bg-emerald-700 text-xs md:text-sm py-2 px-3 md:px-4">
-                  <Save size={16} /> Simpan
-                </button>
-              )}
-              <button onClick={handleDownloadPDF} className="btn-action bg-blue-700 text-xs md:text-sm py-2 px-3 md:px-4">
-                <Download size={16} /> Download PDF
-              </button>
-              <button onClick={handlePrint} className="btn-action bg-gray-700 text-xs md:text-sm py-2 px-3 md:px-4">
-                <Printer size={16} /> Print
-              </button>
-              <button onClick={() => setShowPreviewModal(false)} className="btn-action bg-red-600 text-xs md:text-sm py-2 px-3 md:px-4">
-                <X size={16} /> Tutup
-              </button>
-            </div>
-
-            {/* Container utama untuk Print dan Download PDF mencakup seluruh lembar */}
-            <div id="sptrd-full-container" className="preview-scroll-container py-6 gap-6 print:p-0 print:gap-0 print:overflow-visible">
-              
-              {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
-              <div id="sptrd-document" className="sptrd-paper-jtg">
-                
-                <div>
-                  {/* KOP SURAT */}
-                  <div className="header-jtg">
-                    <img
-                      src="/images/logo-jateng-official.png"
-                      alt="logo"
-                      className="logo-jtg"
-                    />
-                    <div className="header-center">
-                      <h2>PEMERINTAH PROVINSI JAWA TENGAH</h2>
-                      <h3>{formData.opd}</h3>
-                      <div>{formData.uppd}</div>
-                    </div>
-                  </div>
-
-                  <div className="header-line"></div>
-
-                  <h1 className="title-jtg">
-                    SURAT PEMBERITAHUAN RETRIBUSI DAERAH (SPTRD)
-                  </h1>
-
-                  <div className="tujuan-box">
-                    <p>Kepada Yth:</p>
-                    <p>Kepala {formData.opd}</p>
-                    <p>Di</p>
-                    <p>TEMPAT</p>
-                  </div>
-
-                  <p className="intro-text">Yang bertanda tangan dibawah ini, kami:</p>
-
-                  <div className="section-jtg">
-                    <div className="section-title-jtg">I. Identitas Wajib Retribusi :</div>
-                    <table className="table-jtg">
-                      <tbody>
-                        <tr><td>Nama</td><td>:</td><td>{formData.nama}</td></tr>
-                        <tr><td>Alamat</td><td>:</td><td>{formData.alamat}</td></tr>
-                        <tr><td>Nomor Induk Kependudukan</td><td>:</td><td>{formData.nik}</td></tr>
-                        <tr><td>Nomor Induk Berusaha</td><td>:</td><td>{formData.npwrd}</td></tr>
-                        <tr><td>Nomor Telepon</td><td>:</td><td>{formData.telepon}</td></tr>
-                        <tr><td>Alamat Surat Elektronik</td><td>:</td><td>{formData.email}</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="section-jtg">
-                    <div className="section-title-jtg">II. Pelayanan Retribusi yang dimohon:</div>
-                    <table className="table-jtg">
-                      <tbody>
-                        <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
-                        <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
-                        <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek} ( {formData.idgen} )</td></tr>
-                        <tr><td>Uraian Deskripsi</td><td>:</td><td>{formData.keterangan}</td></tr>
-                        <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
-                        <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
-                        <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} {formData.satuan} × Rp {rupiah(formData.tarif)})</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="section-jtg">
-                    <div className="section-title-jtg">III. Jangka waktu Retribusi :</div>
-                    <div className="lampiran-jtg">
-                      <p>Sebagai bahan pertimbangan, berikut kami lampirkan :</p>
-                      <p>a. Fotokopi KTP;</p>
-                      <p>b. Fotokopi NIB bagi Wajib Retribusi Badan Usaha;</p>
-                      <p>c. Surat Kuasa bagi Wajib Retribusi yang tidak menandatangani SPTRD sendiri.</p>
-                    </div>
-                  </div>
-
-                  <div className="pernyataan-jtg">
-                    <p>
-                      Apabila permohonan dikabulkan kami sanggup membayar Retribusi serta menanggung sanksi administratif atas keterlambatan pembayaran Retribusi sesuai ketentuan peraturan perundang-undangan yang berlaku atas kuasa saya.
-                    </p>
-                    <p>
-                      Saya menyatakan bahwa yang kami beritahukan tersebut beserta lampirannya benar, lengkap dan jelas.
-                    </p>
-                  </div>
-
-                  <div className="signature-jtg-center">
-                    <p>{formData.alamat ? formData.alamat.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
-                    <p>Wajib Retribusi</p>
-                    <div className="ttd-space-jtg flex items-center justify-center">
-                      {formData.ttdUrl ? (
-                        <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
-                      ) : null}
-                    </div>
-                    <p className="font-bold underline">{formData.nama}</p>
-                  </div>
-                </div>
-
-                {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 1 */}
-                <div className="document-footer-info">
-                  <span>Dicetak oleh: <strong>{formData.printInfo?.user}</strong></span>
-                  <span>Waktu: <strong>{formData.printInfo?.date} - {formData.printInfo?.time}</strong></span>
-                  <span>Situs: <a href={formData.printInfo?.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">{formData.printInfo?.url}</a></span>
-                </div>
-              </div>
-
-              {/* LEMBAR 2: LAMPIRAN FOTO/PDF KTP */}
-              <div className="sptrd-paper-jtg page-break-before">
-                <div>
-                  <div className="text-center mb-6 border-b pb-4">
-                    <h2 className="text-lg font-bold">LAMPIRAN DOKUMEN IDENTITAS (KTP)</h2>
-                    <p className="text-xs text-gray-600">Wajib Retribusi: {formData.nama} ({formData.nik})</p>
-                  </div>
-
-                  <div className="flex flex-col items-center justify-center py-6">
-                    {formData.ktpUrl ? (
-                      formData.ktpUrl.startsWith("data:application/pdf") ? (
-                        <div className="w-full flex flex-col items-center justify-center border rounded-xl p-6 bg-gray-50">
-                          <FileText size={64} className="text-blue-600 mb-2" />
-                          <p className="font-semibold text-sm">Dokumen KTP berformat PDF</p>
-                          <a 
-                            href={formData.ktpUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
-                          >
-                            Buka / Unduh File PDF
-                          </a>
-                        </div>
-                      ) : (
-                        <div className="max-w-full max-h-[600px] border rounded-xl overflow-hidden shadow-md bg-white p-2">
-                          <img 
-                            src={formData.ktpUrl} 
-                            alt="Lampiran KTP" 
-                            className="max-w-full max-h-[550px] object-contain mx-auto" 
-                          />
-                        </div>
-                      )
-                    ) : (
-                      <p className="text-gray-500 italic">Tidak ada dokumen KTP yang ditemukan.</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 2 */}
-                <div className="document-footer-info">
-                  <span>Dicetak oleh: <strong>{formData.printInfo?.user}</strong></span>
-                  <span>Waktu: <strong>{formData.printInfo?.date} - {formData.printInfo?.time}</strong></span>
-                  <span>Situs: <a href={formData.printInfo?.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">{formData.printInfo?.url}</a></span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
       </div>
 
-      <Footer />
+      <div className="print:hidden">
+        <Footer />
+      </div>
+
+      {/* MODAL PREVIEW SPTRD */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
+          <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-lg p-3 flex flex-wrap justify-center gap-2 print:hidden shadow-md">
+            {!isFromHistory && (
+              <button onClick={handleSaveToFirebase} className="btn-action bg-emerald-600 hover:bg-emerald-700 text-xs md:text-sm py-2 px-3 md:px-4">
+                <Save size={16} /> Simpan
+              </button>
+            )}
+            <button onClick={handleDownloadPDF} className="btn-action bg-blue-700 text-xs md:text-sm py-2 px-3 md:px-4">
+              <Download size={16} /> Download PDF
+            </button>
+            <button onClick={handlePrint} className="btn-action bg-gray-700 text-xs md:text-sm py-2 px-3 md:px-4">
+              <Printer size={16} /> Print
+            </button>
+            <button onClick={() => setShowPreviewModal(false)} className="btn-action bg-red-600 text-xs md:text-sm py-2 px-3 md:px-4">
+              <X size={16} /> Tutup
+            </button>
+          </div>
+
+          {/* Container utama untuk Print dan Download PDF mencakup seluruh lembar */}
+          <div id="sptrd-full-container" className="preview-scroll-container py-6 gap-6 print:p-0 print:gap-0 print:overflow-visible">
+            
+            {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
+            <div id="sptrd-document" className="sptrd-paper-jtg">
+              
+              <div>
+                {/* KOP SURAT */}
+                <div className="header-jtg">
+                  <img
+                    src="/images/logo-jateng-official.png"
+                    alt="logo"
+                    className="logo-jtg"
+                  />
+                  <div className="header-center">
+                    <h2>PEMERINTAH PROVINSI JAWA TENGAH</h2>
+                    <h3>{formData.opd}</h3>
+                    <div>{formData.uppd}</div>
+                  </div>
+                </div>
+
+                <div className="header-line"></div>
+
+                <h1 className="title-jtg">
+                  SURAT PEMBERITAHUAN RETRIBUSI DAERAH (SPTRD)
+                </h1>
+
+                <div className="tujuan-box">
+                  <p>Kepada Yth:</p>
+                  <p>Kepala {formData.opd}</p>
+                  <p>Di</p>
+                  <p>TEMPAT</p>
+                </div>
+
+                <p className="intro-text">Yang bertanda tangan dibawah ini, kami:</p>
+
+                <div className="section-jtg">
+                  <div className="section-title-jtg">I. Identitas Wajib Retribusi :</div>
+                  <table className="table-jtg">
+                    <tbody>
+                      <tr><td>Nama</td><td>:</td><td>{formData.nama}</td></tr>
+                      <tr><td>Alamat</td><td>:</td><td>{formData.alamat}</td></tr>
+                      <tr><td>Nomor Induk Kependudukan</td><td>:</td><td>{formData.nik}</td></tr>
+                      <tr><td>Nomor Induk Berusaha</td><td>:</td><td>{formData.npwrd}</td></tr>
+                      <tr><td>Nomor Telepon</td><td>:</td><td>{formData.telepon}</td></tr>
+                      <tr><td>Alamat Surat Elektronik</td><td>:</td><td>{formData.email}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="section-jtg">
+                  <div className="section-title-jtg">II. Pelayanan Retribusi yang dimohon:</div>
+                  <table className="table-jtg">
+                    <tbody>
+                      <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
+                      <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
+                      <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek} ( {formData.idgen} )</td></tr>
+                      <tr><td>Uraian Deskripsi</td><td>:</td><td>{formData.keterangan}</td></tr>
+                      <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
+                      <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
+                      <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} {formData.satuan} × Rp {rupiah(formData.tarif)})</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="section-jtg">
+                  <div className="section-title-jtg">III. Jangka waktu Retribusi :</div>
+                  <div className="lampiran-jtg">
+                    <p>Sebagai bahan pertimbangan, berikut kami lampirkan :</p>
+                    <p>a. Fotokopi KTP;</p>
+                    <p>b. Fotokopi NIB bagi Wajib Retribusi Badan Usaha;</p>
+                    <p>c. Surat Kuasa bagi Wajib Retribusi yang tidak menandatangani SPTRD sendiri.</p>
+                  </div>
+                </div>
+
+                <div className="pernyataan-jtg">
+                  <p>
+                    Apabila permohonan dikabulkan kami sanggup membayar Retribusi serta menanggung sanksi administratif atas keterlambatan pembayaran Retribusi sesuai ketentuan peraturan perundang-undangan yang berlaku atas kuasa saya.
+                  </p>
+                  <p>
+                    Saya menyatakan bahwa yang kami beritahukan tersebut beserta lampirannya benar, lengkap dan jelas.
+                  </p>
+                </div>
+
+                <div className="signature-jtg-center">
+                  <p>{formData.alamat ? formData.alamat.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
+                  <p>Wajib Retribusi</p>
+                  <div className="ttd-space-jtg flex items-center justify-center">
+                    {formData.ttdUrl ? (
+                      <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
+                    ) : null}
+                  </div>
+                  <p className="font-bold underline">{formData.nama}</p>
+                </div>
+              </div>
+
+              {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 1 */}
+              <div className="document-footer-info">
+                <span>Dicetak oleh: <strong>{formData.printInfo?.user}</strong></span>
+                <span>Waktu: <strong>{formData.printInfo?.date} - {formData.printInfo?.time}</strong></span>
+                <span>Situs: <a href={formData.printInfo?.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">{formData.printInfo?.url}</a></span>
+              </div>
+            </div>
+
+            {/* LEMBAR 2: LAMPIRAN FOTO/PDF KTP */}
+            <div className="sptrd-paper-jtg page-break-before">
+              <div>
+                <div className="text-center mb-6 border-b pb-4">
+                  <h2 className="text-lg font-bold">LAMPIRAN DOKUMEN IDENTITAS (KTP)</h2>
+                  <p className="text-xs text-gray-600">Wajib Retribusi: {formData.nama} ({formData.nik})</p>
+                </div>
+
+                <div className="flex flex-col items-center justify-center py-6">
+                  {formData.ktpUrl ? (
+                    formData.ktpUrl.startsWith("data:application/pdf") ? (
+                      <div className="w-full flex flex-col items-center justify-center border rounded-xl p-6 bg-gray-50">
+                        <FileText size={64} className="text-blue-600 mb-2" />
+                        <p className="font-semibold text-sm">Dokumen KTP berformat PDF</p>
+                        <a 
+                          href={formData.ktpUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
+                        >
+                          Buka / Unduh File PDF
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="max-w-full max-h-[600px] border rounded-xl overflow-hidden shadow-md bg-white p-2">
+                        <img 
+                          src={formData.ktpUrl} 
+                          alt="Lampiran KTP" 
+                          className="max-w-full max-h-[550px] object-contain mx-auto" 
+                        />
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-gray-500 italic">Tidak ada dokumen KTP yang ditemukan.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* INFORMASI PERCETAKAN DI BAGIAN BAWAH HALAMAN 2 */}
+              <div className="document-footer-info">
+                <span>Dicetak oleh: <strong>{formData.printInfo?.user}</strong></span>
+                <span>Waktu: <strong>{formData.printInfo?.date} - {formData.printInfo?.time}</strong></span>
+                <span>Situs: <a href={formData.printInfo?.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">{formData.printInfo?.url}</a></span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .btn-action {
@@ -1481,6 +1485,7 @@ export default function SPTRD() {
           flex-direction: column;
           justify-content: space-between;
           position: relative;
+          flex-shrink: 0;
           box-sizing: border-box;
           overflow: hidden;
         }
@@ -1596,18 +1601,28 @@ export default function SPTRD() {
             size: A4 portrait;
             margin: 0;
           }
+          body * {
+            visibility: hidden !important;
+          }
+          #sptrd-full-container, #sptrd-full-container * {
+            visibility: visible !important;
+          }
           body, html {
             background: white !important;
             width: 210mm;
             height: 297mm;
             margin: 0 !important;
             padding: 0 !important;
+            overflow: visible !important;
           }
           .print\:hidden {
             display: none !important;
           }
           .preview-scroll-container {
             display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
             overflow: visible !important;
