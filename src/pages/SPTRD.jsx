@@ -1417,6 +1417,17 @@ export default function SPTRD() {
           cursor: pointer;
           font-weight: 600;
         }
+          .signature-jtg-center {
+          width: 280px;
+          margin-left: auto;
+          margin-right: 0;
+          text-align: center;
+          margin-top: 35px;
+        }
+        .ttd-space-jtg {
+          height: 60px;
+          margin: 5px 0;
+        }
         .sptrd-paper-jtg {
           width: 210mm;
           min-height: 297mm;
