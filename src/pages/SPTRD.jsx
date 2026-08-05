@@ -660,16 +660,21 @@ export default function SPTRD() {
     const html2pdf = (await import("html2pdf.js")).default;
     const element = document.getElementById("sptrd-full-container");
 
-    html2pdf()
-      .set({
-        margin: 0,
-        filename: `SPTRD-${formData.nomor}.pdf`,
-        image: { type: "jpeg", quality: 1 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      })
-      .from(element)
-      .save();
+    const opt = {
+      margin: 0,
+      filename: `SPTRD-${formData.nomor}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        scrollY: 0
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.sptrd-paper-jtg'] }
+    };
+
+    html2pdf().from(element).set(opt).save();
   };
 
   return (
@@ -1459,12 +1464,13 @@ export default function SPTRD() {
           flex-direction: column;
           align-items: center;
           padding: 20px 10px;
-          gap: 0px !important;
+          gap: 20px;
           -webkit-overflow-scrolling: touch;
         }
         .sptrd-paper-jtg {
           width: 210mm;
-          min-height: 297mm;
+          height: 297mm;
+          max-height: 297mm;
           background: white;
           padding: 12mm 18mm 10mm 18mm;
           font-family: "Times New Roman", serif;
@@ -1477,19 +1483,13 @@ export default function SPTRD() {
           position: relative;
           flex-shrink: 0;
           box-sizing: border-box;
-          margin-bottom: 0px !important;
-        }
-        .sptrd-paper-jtg + .sptrd-paper-jtg {
-          margin-top: 20px;
+          overflow: hidden;
         }
         @media (max-width: 768px) {
           .sptrd-paper-jtg {
             transform: scale(0.6);
             transform-origin: top center;
-            margin-bottom: -120mm !important;
-          }
-          .sptrd-paper-jtg + .sptrd-paper-jtg {
-            margin-top: -100mm;
+            margin-bottom: -110mm;
           }
         }
         .document-footer-info {
