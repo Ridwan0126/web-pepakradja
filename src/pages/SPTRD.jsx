@@ -656,50 +656,25 @@ export default function SPTRD() {
     window.print();
   };
 
- const handleDownloadPDF = async () => {
-    if (!formData.nomor) {
-      Swal.fire({
-        icon: "warning",
-        title: "Data Kosong",
-        text: "Silakan pilih obyek dan buat preview SPTRD terlebih dahulu.",
-      });
-      return;
-    }
+  const handleDownloadPDF = async () => {
+    const html2pdf = (await import("html2pdf.js")).default;
+    const element = document.getElementById("sptrd-full-container");
 
-    try {
-      // Menampilkan loading saat merender PDF
-      Swal.fire({
-        title: "Sedang Memproses PDF...",
-        text: "Harap tunggu sebentar, file PDF sedang diunduh.",
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
+    const opt = {
+      margin: 0,
+      filename: `SPTRD-${formData.nomor}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        scrollY: 0
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.sptrd-paper-jtg'] }
+    };
 
-      const html2pdf = (await import("html2pdf.js")).default;
-      
-      const element = document.getElementById("sptrd-full-container");
-      
-      const opt = {
-        margin:       [10, 10, 10, 10], // margin atas, kanan, bawah, kiri dalam mm
-        filename:     `${formData.nomor}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      await html2pdf().from(element).set(opt).save();
-      
-      Swal.close();
-    } catch (err) {
-      console.error("Gagal mendownload PDF:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal",
-        text: "Terjadi kesalahan saat menghasilkan file PDF.",
-      });
-    }
+    html2pdf().from(element).set(opt).save();
   };
 
   return (
@@ -1476,10 +1451,10 @@ export default function SPTRD() {
           margin-left: auto;
           margin-right: 0;
           text-align: center;
-          margin-top: 10px;
+          margin-top: 20px;
         }
         .ttd-space-jtg {
-          height: 40px;
+          height: 45px;
           margin: 2px 0;
         }
         .preview-scroll-container {
@@ -1490,36 +1465,38 @@ export default function SPTRD() {
           align-items: center;
           padding: 20px 10px;
           gap: 20px;
+          -webkit-overflow-scrolling: touch;
         }
         .sptrd-paper-jtg {
           width: 210mm;
-          min-height: 297mm;
+          height: 297mm;
           max-height: 297mm;
           background: white;
           padding: 12mm 18mm 10mm 18mm;
           font-family: "Times New Roman", serif;
-          font-size: 11px;
+          font-size: 11.5px;
           color: #000;
           box-shadow: 0 10px 25px rgba(0,0,0,0.2);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           position: relative;
+          flex-shrink: 0;
           box-sizing: border-box;
           overflow: hidden;
         }
         @media (max-width: 768px) {
           .sptrd-paper-jtg {
-            transform: scale(0.55);
+            transform: scale(0.6);
             transform-origin: top center;
-            margin-bottom: -130mm;
+            margin-bottom: -110mm;
           }
         }
         .document-footer-info {
           border-top: 1px solid #cbd5e1;
-          margin-top: 5px;
-          padding-top: 4px;
-          font-size: 9.5px;
+          margin-top: 10px;
+          padding-top: 6px;
+          font-size: 10px;
           color: #64748b;
           display: flex;
           justify-content: space-between;
@@ -1528,7 +1505,6 @@ export default function SPTRD() {
         }
         .page-break-before {
           page-break-before: always;
-          break-before: page;
         }
         .header-jtg {
           display: flex;
@@ -1536,10 +1512,10 @@ export default function SPTRD() {
           justify-content: center;
           position: relative;
           width: 100%;
-          margin-bottom: 2px;
+          margin-bottom: 5px;
         }
         .logo-jtg {
-          width: 60px;
+          width: 65px;
           position: absolute;
           left: 10px;
         }
@@ -1550,58 +1526,59 @@ export default function SPTRD() {
         }
         .header-center h2 {
           margin: 0;
-          font-size: 15px;
+          font-size: 16px;
           font-weight: bold;
+          letter-spacing: 0.5px;
         }
         .header-center h3 {
-          margin: 1px 0;
-          font-size: 13px;
+          margin: 2px 0;
+          font-size: 14px;
           font-weight: bold;
         }
         .header-center div {
-          font-size: 11px;
+          font-size: 12px;
         }
         .header-line {
-          border-bottom: 2.5px solid #000;
-          margin-top: 4px;
-          margin-bottom: 8px;
+          border-bottom: 3px solid #000;
+          margin-top: 6px;
+          margin-bottom: 10px;
         }
         .title-jtg {
           text-align: center;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: bold;
-          margin-bottom: 10px;
+          margin-bottom: 15px;
         }
         .tujuan-box {
-          width: 220px;
+          width: 230px;
           margin-left: auto;
           text-align: left;
-          margin-bottom: 8px;
-          font-size: 11px;
+          margin-bottom: 12px;
+          font-size: 11.5px;
         }
         .tujuan-box p {
           margin: 1px 0;
         }
         .intro-text {
-          margin-bottom: 6px;
+          margin-bottom: 8px;
         }
         .section-jtg {
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
         .section-title-jtg {
           font-weight: bold;
-          margin-bottom: 2px;
+          margin-bottom: 3px;
         }
         .table-jtg {
           width: 100%;
           border-collapse: collapse;
         }
         .table-jtg td {
-          padding: 1px 0;
+          padding: 1.5px 0;
           vertical-align: top;
         }
         .table-jtg td:first-child {
-          width: 200px;
+          width: 210px;
         }
         .table-jtg td:nth-child(2) {
           width: 15px;
@@ -1611,8 +1588,8 @@ export default function SPTRD() {
         }
         .pernyataan-jtg {
           text-align: justify;
-          margin-top: 6px;
-          line-height: 1.3;
+          margin-top: 8px;
+          line-height: 1.35;
         }
         @media print {
           body {
@@ -1636,12 +1613,11 @@ export default function SPTRD() {
             margin: 0 !important;
             padding: 10mm 15mm 10mm 15mm !important;
             page-break-after: always !important;
-            break-after: page !important;
+            page-break-inside: avoid !important;
             transform: none !important;
           }
           .sptrd-paper-jtg:last-child {
             page-break-after: avoid !important;
-            break-after: avoid !important;
           }
         }
       `}</style>
