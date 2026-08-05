@@ -665,7 +665,7 @@ export default function SPTRD() {
         margin: 0,
         filename: `SPTRD-${formData.nomor}.pdf`,
         image: { type: "jpeg", quality: 1 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       })
       .from(element)
@@ -1459,6 +1459,7 @@ export default function SPTRD() {
           flex-direction: column;
           align-items: center;
           padding: 20px 10px;
+          gap: 0px !important;
           -webkit-overflow-scrolling: touch;
         }
         .sptrd-paper-jtg {
@@ -1476,13 +1477,19 @@ export default function SPTRD() {
           position: relative;
           flex-shrink: 0;
           box-sizing: border-box;
-          margin-bottom: 20px;
+          margin-bottom: 0px !important;
+        }
+        .sptrd-paper-jtg + .sptrd-paper-jtg {
+          margin-top: 20px;
         }
         @media (max-width: 768px) {
           .sptrd-paper-jtg {
             transform: scale(0.6);
             transform-origin: top center;
-            margin-bottom: -120mm;
+            margin-bottom: -120mm !important;
+          }
+          .sptrd-paper-jtg + .sptrd-paper-jtg {
+            margin-top: -100mm;
           }
         }
         .document-footer-info {
@@ -1596,6 +1603,7 @@ export default function SPTRD() {
             padding: 0 !important;
             margin: 0 !important;
             overflow: visible !important;
+            gap: 0 !important;
           }
           .sptrd-paper-jtg {
             width: 210mm !important;
