@@ -656,9 +656,12 @@ export default function SPTRD() {
     window.print();
   };
 
-  const handleDownloadPDF = async () => {
+ const handleDownloadPDF = async () => {
     const html2pdf = (await import("html2pdf.js")).default;
-    const element = document.getElementById("sptrd-full-container");
+    
+    // Ambil elemen lembar 1 dan lembar 2 secara spesifik
+    const page1 = document.getElementById("sptrd-document");
+    const page2 = page1.nextElementSibling; // Mengambil elemen lembar KTP berikutnya
 
     const opt = {
       margin: 0,
@@ -670,11 +673,23 @@ export default function SPTRD() {
         letterRendering: true,
         scrollY: 0
       },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.sptrd-paper-jtg'] }
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
     };
 
-    html2pdf().from(element).set(opt).save();
+    // Render halaman pertama, lalu tambahkan halaman kedua secara chaining
+    html2pdf()
+      .set(opt)
+      .from(page1)
+      .toPdf()
+      .get('pdf')
+      .then(async (pdf) => {
+        pdf.addPage();
+        // Render halaman kedua ke halaman baru PDF
+        const canvas2 = await html2pdf().set(opt).from(page2).output('canvas');
+        const imgData2 = canvas2.toDataURL('image/jpeg', 0.98);
+        pdf.addImage(imgData2, 'JPEG', 0, 0, 210, 297);
+        pdf.save(`SPTRD-${formData.nomor}.pdf`);
+      });
   };
 
   return (
