@@ -1255,24 +1255,24 @@ export default function SPTRD() {
         {/* MODAL PREVIEW SPTRD */}
         {showPreviewModal && (
           <div className="fixed inset-0 z-50 bg-black/70 overflow-y-auto">
-            <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-lg p-3 flex flex-wrap justify-center gap-2 print:hidden shadow-md">
+            <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-lg p-4 flex justify-center gap-3 print:hidden">
               {!isFromHistory && (
-                <button onClick={handleSaveToFirebase} className="btn-action bg-emerald-600 hover:bg-emerald-700 text-xs md:text-sm py-2 px-3 md:px-4">
-                  <Save size={16} /> Simpan
+                <button onClick={handleSaveToFirebase} className="btn-action bg-emerald-600 hover:bg-emerald-700">
+                  <Save size={18} /> Simpan
                 </button>
               )}
-              <button onClick={handleDownloadPDF} className="btn-action bg-blue-700 text-xs md:text-sm py-2 px-3 md:px-4">
-                <Download size={16} /> Download PDF
+              <button onClick={handleDownloadPDF} className="btn-action bg-blue-700">
+                <Download size={18} /> Download PDF
               </button>
-              <button onClick={handlePrint} className="btn-action bg-gray-700 text-xs md:text-sm py-2 px-3 md:px-4">
-                <Printer size={16} /> Print
+              <button onClick={handlePrint} className="btn-action bg-gray-700">
+                <Printer size={18} /> Print
               </button>
-              <button onClick={() => setShowPreviewModal(false)} className="btn-action bg-red-600 text-xs md:text-sm py-2 px-3 md:px-4">
-                <X size={16} /> Tutup
+              <button onClick={() => setShowPreviewModal(false)} className="btn-action bg-red-600">
+                <X size={18} /> Tutup
               </button>
             </div>
 
-            <div className="preview-scroll-container py-6 gap-6 print:p-0 print:gap-0 print:overflow-visible">
+            <div className="flex flex-col items-center py-10 gap-10 print:p-0 print:gap-0">
               
               {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
               <div id="sptrd-document" className="sptrd-paper-jtg">
@@ -1447,15 +1447,6 @@ export default function SPTRD() {
           height: 50px;
           margin: 3px 0;
         }
-        .preview-scroll-container {
-          width: 100%;
-          overflow-x: auto;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 10px;
-          -webkit-overflow-scrolling: touch;
-        }
         .sptrd-paper-jtg {
           width: 210mm;
           min-height: 297mm;
@@ -1469,14 +1460,6 @@ export default function SPTRD() {
           flex-direction: column;
           justify-content: space-between;
           position: relative;
-          flex-shrink: 0;
-        }
-        @media (max-width: 768px) {
-          .sptrd-paper-jtg {
-            transform: scale(0.65);
-            transform-origin: top center;
-            margin-bottom: -110mm;
-          }
         }
         .document-footer-info {
           border-top: 1px solid #cbd5e1;
@@ -1593,7 +1576,6 @@ export default function SPTRD() {
             min-height: 297mm;
             box-shadow: none;
             page-break-after: always;
-            transform: none !important;
           }
           .print\\:hidden {
             display: none !important;
