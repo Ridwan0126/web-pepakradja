@@ -1346,7 +1346,7 @@ export default function SPTRD() {
                 </div>
 
                <div className="signature-jtg-center">
-                  <p>{formData.kota ? formData.kota.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
+                  <p>{formData.alamat ? formData.alamat.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
                   <p>Wajib Retribusi</p>
                   <div className="ttd-space-jtg flex items-center justify-center">
                     {formData.ttdUrl ? (
