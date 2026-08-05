@@ -34,6 +34,8 @@ import {
   Calendar,
   Eye,
   Save,
+  PenTool,
+  RotateCcw,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import Swal from "sweetalert2";
@@ -81,6 +83,16 @@ export default function SPTRD() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyList, setHistoryList] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // TTD MODAL STATES
+  const [showTtdModal, setShowTtdModal] = useState(false);
+  const [ttdTab, setTtdTab] = useState("draw"); // 'draw' or 'upload'
+  const canvasRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const ttdFileRef = useRef(null);
+  const [tempTtd, setTempTtd] = useState("");
+  const [pendingObyek, setPendingObyek] = useState(null);
+  const [pendingVolume, setPendingVolume] = useState(1);
 
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
@@ -302,6 +314,9 @@ export default function SPTRD() {
     );
   };
 
+  // =========================
+  // HANDLE PREVIEW SPTRD & TTD
+  // =========================
   const handlePreviewSPTRD = async (targetObyek) => {
     if (!targetObyek) return;
 
@@ -336,20 +351,29 @@ export default function SPTRD() {
       return;
     }
 
-    // Minta input volume terlebih dahulu via SweetAlert2
+    const satuanName = targetObyek?.tariftbl?.satuan?.satuan || "Unit";
+
+    // Minta input volume dengan satuan di sebelah kanan
     const { value: inputVolume, dismiss } = await Swal.fire({
       title: "Masukkan Volume",
-      text: "Masukkan jumlah/volume untuk pengajuan retribusi ini:",
-      input: "number",
-      inputAttributes: {
-        min: 1,
-        step: 1,
-      },
-      inputValue: 1,
+      html: `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
+          <input type="number" id="swal-input-volume" class="swal2-input" min="1" step="1" value="1" style="margin: 0; width: 120px; text-align: center;" />
+          <span style="font-weight: bold; font-size: 16px; color: #334155;">${satuanName}</span>
+        </div>
+      `,
+      focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: "Lanjutkan",
       cancelButtonText: "Batal",
       confirmButtonColor: "#2563eb",
+      preConfirm: () => {
+        const val = document.getElementById("swal-input-volume").value;
+        if (!val || val <= 0) {
+          Swal.showValidationMessage("Masukkan volume yang valid!");
+        }
+        return val;
+      }
     });
 
     if (dismiss === Swal.DismissReason.cancel || !inputVolume) {
@@ -357,10 +381,96 @@ export default function SPTRD() {
     }
 
     const volume = parseFloat(inputVolume) || 1;
+    setPendingObyek(targetObyek);
+    setPendingVolume(volume);
+    setTempTtd("");
+    setShowTtdModal(true);
+  };
+
+  // CANVAS DRAWING HANDLERS
+  useEffect(() => {
+    if (showTtdModal && ttdTab === "draw" && canvasRef.current) {
+      const canvas = canvasRef.current;
+      canvas.width = canvas.parentElement.offsetWidth;
+      canvas.height = 200;
+      const ctx = canvas.getContext("2d");
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+    }
+  }, [showTtdModal, ttdTab]);
+
+  const startDrawing = (e) => {
+    setIsDrawing(true);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+    const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    const canvas = canvasRef.current;
+    setTempTtd(canvas.toDataURL("image/png"));
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setTempTtd("");
+  };
+
+  const handleUploadTtdFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.includes("png")) {
+      Swal.fire({
+        icon: "error",
+        title: "Format Harus PNG",
+        text: "Harap unggah file TTD berformat PNG transparan.",
+      });
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setTempTtd(reader.result);
+    };
+  };
+
+  const handleConfirmTtd = async () => {
+    if (!tempTtd) {
+      Swal.fire({
+        icon: "warning",
+        title: "TTD Kosong",
+        text: "Silakan coret atau unggah TTD terlebih dahulu.",
+      });
+      return;
+    }
+
+    setShowTtdModal(false);
+    const targetObyek = pendingObyek;
+    const volume = pendingVolume;
+
     const tarif = Number(targetObyek?.tariftbl?.tarif || 0);
     const nilaiRetribusi = volume * tarif;
 
-    // Ambil data KTP dari Firestore untuk ditampilkan di Lembar 2
     let ktpDataUrl = "";
     try {
       const userId = wr?.id || wr?.npwrd || wr?.nik_npwp;
@@ -401,6 +511,7 @@ export default function SPTRD() {
       nilaiRetribusi: nilaiRetribusi,
       kota: targetObyek?.kota?.kab_kota || "JAWA TENGAH",
       ktpUrl: ktpDataUrl,
+      ttdUrl: tempTtd,
       qr: JSON.stringify({
         wr: wr?.npwrd,
         obyek: targetObyek?.id,
@@ -732,6 +843,102 @@ export default function SPTRD() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* MODAL INPUT / UPLOAD TTD */}
+        {showTtdModal && (
+          <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+              <div className="flex justify-between items-center border-b pb-3">
+                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                  <PenTool className="w-5 h-5 text-blue-600" /> Tanda Tangan Wajib Retribusi
+                </h3>
+                <button onClick={() => setShowTtdModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                <button
+                  onClick={() => setTtdTab("draw")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${ttdTab === "draw" ? "bg-white text-blue-600 shadow-sm" : "text-gray-600"}`}
+                >
+                  Coret Langsung
+                </button>
+                <button
+                  onClick={() => setTtdTab("upload")}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${ttdTab === "upload" ? "bg-white text-blue-600 shadow-sm" : "text-gray-600"}`}
+                >
+                  Upload Foto (PNG)
+                </button>
+              </div>
+
+              {ttdTab === "draw" ? (
+                <div className="space-y-3">
+                  <div className="border-2 border-dashed border-gray-300 rounded-2xl bg-white overflow-hidden relative">
+                    <canvas
+                      ref={canvasRef}
+                      onMouseDown={startDrawing}
+                      onMouseMove={draw}
+                      onMouseUp={stopDrawing}
+                      onMouseLeave={stopDrawing}
+                      onTouchStart={startDrawing}
+                      onTouchMove={draw}
+                      onTouchEnd={stopDrawing}
+                      className="w-full cursor-crosshair touch-none"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <button
+                      onClick={clearCanvas}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5"
+                    >
+                      <RotateCcw size={14} /> Reset Coretan
+                    </button>
+                    <span className="text-xs text-slate-400">Silakan buat tanda tangan di atas kotak</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    ref={ttdFileRef}
+                    onChange={handleUploadTtdFile}
+                    accept="image/png"
+                    className="hidden"
+                  />
+                  <div
+                    onClick={() => ttdFileRef.current?.click()}
+                    className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center cursor-pointer hover:bg-gray-50 transition-all flex flex-col items-center justify-center gap-2"
+                  >
+                    <Upload className="w-8 h-8 text-blue-600" />
+                    <p className="text-xs font-bold text-slate-700">Klik untuk upload file TTD (Format PNG)</p>
+                  </div>
+                  {tempTtd && (
+                    <div className="text-center">
+                      <p className="text-xs text-green-600 font-bold mb-2">Preview TTD yang diunggah:</p>
+                      <img src={tempTtd} alt="Preview TTD" className="max-h-24 mx-auto border rounded-lg p-1 bg-gray-50" />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  onClick={() => setShowTtdModal(false)}
+                  className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-xl text-xs font-semibold"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleConfirmTtd}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md"
+                >
+                  Gunakan Tanda Tangan
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1078,7 +1285,7 @@ export default function SPTRD() {
                       <tr><td>Uraian Deskripsi / Volume</td><td>:</td><td>{formData.keterangan}</td></tr>
                       <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
                       <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
-                      <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} × Rp {rupiah(formData.tarif)})</td></tr>
+                      <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} {formData.satuan} × Rp {rupiah(formData.tarif)})</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -1107,8 +1314,12 @@ export default function SPTRD() {
                   <div className="signature-right">
                     <p>{formData.alamat}, {formData.tanggal}</p>
                     <p>Wajib Retribusi / Kuasa</p>
-                    <div className="ttd-space-jtg"></div>
-                    <p>.........................................</p>
+                    <div className="ttd-space-jtg flex items-center justify-center">
+                      {formData.ttdUrl ? (
+                        <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
+                      ) : null}
+                    </div>
+                    <p className="font-bold underline">{formData.nama}</p>
                   </div>
                 </div>
 
@@ -1269,7 +1480,7 @@ export default function SPTRD() {
           width: 250px;
         }
         .ttd-space-jtg {
-          height: 50px;
+          height: 60px;
         }
         .footer-note {
           margin-top: 20px;

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
-// TAMBAHAN: menambahkan getDoc untuk mengecek data lama
-import { getFirestore, collection, writeBatch, doc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, writeBatch, doc } from "firebase/firestore";
 import { Star, MapPin, Database } from "lucide-react"; 
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -31,9 +30,9 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
   const [totalItems, setTotalItems] = useState(500);
   const [hasMore, setHasMore] = useState(true);
 
-  // State tambahan untuk migrasi (Mulai dari 20.000 karena data kemarin)
+  // State tambahan untuk migrasi
   const [isMigrating, setIsMigrating] = useState(false);
-  const [migrationProgress, setMigrationProgress] = useState(20000);
+  const [migrationProgress, setMigrationProgress] = useState(0);
 
   useEffect(() => {
     setProducts([]);
@@ -87,7 +86,7 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
       const updated = append ? [...products, ...rawProducts] : rawProducts;
       setProducts(updated);
 
-      // Otomatis update totalItems berdasarkan total_row dari API (21222)
+      // Otomatis update totalItems berdasarkan total_row dari API
       setTotalItems(payload.total_row || 0);
       setHasMore(updated.length < (payload.total_row || 0));
     } catch (err) {
@@ -107,20 +106,18 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
   const displayedCount = products.length;
   const showLoadMore = hasMore;
 
-  // FUNGSI MIGRASI DENGAN ANTIDUPLIKASI & OPTIMASI KUOTA
+  // FUNGSI MIGRASI DENGAN ANTIDUPLIKASI & PEMBARUAN DATA (UPDATE)
   const handleMigrateToFirebase = async () => {
     setIsMigrating(true);
     
-    // Set awal target data
-    const TOTAL_DATA_TARGET = 21222; 
-    let count = 20000; 
+    const TOTAL_DATA_TARGET = 21402; 
+    let count = 0; 
     const BATCH_SIZE = 500;
     
     setMigrationProgress(count);
 
     try {
-      // PERBAIKAN: Langsung lompat ke halaman 41 untuk mengambil data ke-20001 dst.
-      for (let page = 41; count < TOTAL_DATA_TARGET; page++) {
+      for (let page = 1; count < TOTAL_DATA_TARGET; page++) {
         const response = await retributiAPI_Endpoints.getProducts(page, BATCH_SIZE);
         const data = response.data?.data || [];
         if (data.length === 0) break;
@@ -128,32 +125,28 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
         const batch = writeBatch(db);
         let activeBatchCount = 0;
 
-        // Cek satu-persatu secara asinkronus apakah dokumen sudah ada di Firestore
         for (const item of data) {
           const docRef = doc(collection(db, "obyek_retribusi"), String(item.id));
-          const docSnap = await getDoc(docRef);
-
-          // JIKA BELUM ADA DI FIRESTORE -> MASUKKAN KE BATCH
-          if (!docSnap.exists()) {
-            batch.set(docRef, item);
-            activeBatchCount++;
-          }
+          
+          // Menggunakan set dengan { merge: true }
+          // - Jika data belum ada: Insert dokumen baru (Anti-duplikat)
+          // - Jika data sudah ada: Update dengan data terbaru dari API
+          batch.set(docRef, item, { merge: true });
+          activeBatchCount++;
         }
 
-        // Jalankan commit hanya jika ada data baru yang masuk antrean batch
         if (activeBatchCount > 0) {
           await batch.commit();
         }
         
-        // Update progress secara berkala di UI
         count += data.length;
         setMigrationProgress(Math.min(count, TOTAL_DATA_TARGET));
 
-        // JEDA KESELAMATAN: Beri jeda 1.5 detik per halaman agar Firestore tidak overload/exhausted
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        // Jeda keselamatan agar Firestore tidak mengalami rate limit / overload
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       
-      alert("Hebat! Sisa 1.222 data berhasil dimasukkan tanpa duplikasi.");
+      alert("Hebat! Seluruh 21.402 data berhasil disinkronisasi (antiduplikat & update data terbaru).");
     } catch (err) {
       console.error(err);
       alert("Migrasi terhenti: " + err.message);
@@ -169,10 +162,10 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
         <div>
            <h3 className="font-bold text-sm flex items-center gap-2">
              <Database className="w-4 h-4 text-indigo-600" />
-             Tools Migrasi Kebutuhan Firestore (Anti-Duplikat)
+             Tools Migrasi Kebutuhan Firestore (Anti-Duplikat & Update)
            </h3>
            <p className="text-xs text-slate-500 mt-0.5">
-             Progress Data: <span className="font-semibold text-slate-800">{migrationProgress}</span> / 21.222
+             Progress Data: <span className="font-semibold text-slate-800">{migrationProgress}</span> / 21.402
            </p>
         </div>
         <button 
@@ -180,7 +173,7 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
           disabled={isMigrating}
           className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 disabled:bg-slate-300 transition-all shadow-sm"
         >
-          {isMigrating ? "Memeriksa & Menyimpan..." : "Lanjutkan Sisa 1.222 Data"}
+          {isMigrating ? "Memproses Data..." : "Mulai Migrasi 21.402 Data"}
         </button>
       </div>
 

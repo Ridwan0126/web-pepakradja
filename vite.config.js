@@ -30,6 +30,14 @@ export default defineConfig({
           });
         },
       },
+'/monev': {
+        target: 'https://rpp.bapenda.jatengprov.go.id',
+        changeOrigin: true,
+        secure: false,
+        // Coba hilangkan penambahan /penatausahaan/api di sini jika route backend aslinya berbeda,
+        // atau sesuaikan jika endpoint login aslinya berada di jalur lain.
+        rewrite: (path) => path.replace(/^\/monev/, '')
+      },
 
       "/bapenda": {
         target: "https://rpp.bapenda.jatengprov.go.id",

@@ -67,7 +67,7 @@ export default function SplashScreen({ onFinish }) {
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
             >
               <img
-                src="/images/logopepakraja.png"
+                src="/images/pepak1.png"
                 alt="Logo"
                 style={{ width: "120px", height: "auto", marginBottom: "24px" }}
               />
@@ -87,7 +87,7 @@ export default function SplashScreen({ onFinish }) {
                   margin: "0 0 8px 0",
                 }}
               >
-                PEPAK RAJA
+                PEPAK RADJA
               </h1>
               <p
                 style={{
