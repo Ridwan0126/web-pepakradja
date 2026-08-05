@@ -658,7 +658,7 @@ export default function SPTRD() {
 
   const handleDownloadPDF = async () => {
     const html2pdf = (await import("html2pdf.js")).default;
-    const element = document.getElementById("sptrd-document");
+    const element = document.getElementById("sptrd-full-container");
 
     html2pdf()
       .set({
@@ -666,7 +666,7 @@ export default function SPTRD() {
         filename: `SPTRD-${formData.nomor}.pdf`,
         image: { type: "jpeg", quality: 1 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: [330, 210], orientation: "portrait" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       })
       .from(element)
       .save();
@@ -1272,7 +1272,8 @@ export default function SPTRD() {
               </button>
             </div>
 
-            <div className="preview-scroll-container py-6 gap-6 print:p-0 print:gap-0 print:overflow-visible">
+            {/* Container utama untuk Print dan Download PDF mencakup seluruh lembar */}
+            <div id="sptrd-full-container" className="preview-scroll-container py-6 gap-6 print:p-0 print:gap-0 print:overflow-visible">
               
               {/* LEMBAR 1: SURAT PERMOHONAN SPTRD */}
               <div id="sptrd-document" className="sptrd-paper-jtg">
@@ -1581,15 +1582,18 @@ export default function SPTRD() {
           body * {
             visibility: hidden;
           }
-          #sptrd-document,
-          #sptrd-document *,
-          .sptrd-paper-jtg {
+          #sptrd-full-container,
+          #sptrd-full-container * {
             visibility: visible;
           }
-          .sptrd-paper-jtg {
+          #sptrd-full-container {
             position: absolute;
             left: 0;
             top: 0;
+            width: 100%;
+          }
+          .sptrd-paper-jtg {
+            position: relative;
             width: 210mm;
             min-height: 297mm;
             box-shadow: none;
@@ -1597,7 +1601,7 @@ export default function SPTRD() {
             transform: none !important;
             margin-bottom: 0 !important;
           }
-          .print\\:hidden {
+          .print\:hidden {
             display: none !important;
           }
         }
