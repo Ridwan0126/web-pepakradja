@@ -620,7 +620,7 @@ export default function Header() {
                       </div>
 
                       {/* NOTIFICATION */}
-                      <div ref={notifRef} className="relative">
+                      {/* <div ref={notifRef} className="relative">
                         <button
                           onClick={() => {
                             setShowCategory(false);
@@ -696,7 +696,7 @@ export default function Header() {
                             </motion.div>
                           )}
                         </AnimatePresence>
-                      </div>
+                      </div> */}
                     </div>
                   ) : (
                     /* Tombol Masuk/Daftar diubah agar selalu tampil di semua ukuran layar (menghapus kelas `hidden md:flex`) */
