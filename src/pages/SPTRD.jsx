@@ -1318,7 +1318,7 @@ export default function SPTRD() {
                       <tr><td>Jenis Retribusi</td><td>:</td><td>{formData.jenis}</td></tr>
                       <tr><td>Objek Retribusi</td><td>:</td><td>{formData.pelayanan}</td></tr>
                       <tr><td>Rincian Objek Retribusi</td><td>:</td><td>{formData.obyek} ( {formData.idgen} )</td></tr>
-                      <tr><td>Uraian Deskripsi / Volume</td><td>:</td><td>{formData.keterangan}</td></tr>
+                      <tr><td>Uraian Deskripsi</td><td>:</td><td>{formData.keterangan}</td></tr>
                       <tr><td>Lokasi</td><td>:</td><td>{formData.lokasi}</td></tr>
                       <tr><td>Tarif</td><td>:</td><td>Rp {rupiah(formData.tarif)} / {formData.satuan}</td></tr>
                       <tr><td>Nilai Retribusi</td><td>:</td><td><strong>Rp {rupiah(formData.nilaiRetribusi)}</strong> ({formData.volume} {formData.satuan} × Rp {rupiah(formData.tarif)})</td></tr>
@@ -1345,24 +1345,20 @@ export default function SPTRD() {
                   </p>
                 </div>
 
-                {/* TANDA TANGAN (POSISI DI KANAN BAWAH SECARA SIMETRIS) */}
-                <div className="signature-jtg">
-                  <div></div>
-                  <div className="signature-right">
-                    <p>{formData.kota ? formData.kota.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
-                    <p>Wajib Retribusi / Kuasa</p>
-                    <div className="ttd-space-jtg flex items-center justify-center">
-                      {formData.ttdUrl ? (
-                        <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
-                      ) : null}
-                    </div>
-                    <p className="font-bold underline">{formData.nama}</p>
+               <div className="signature-jtg-center">
+                  <p>{formData.kota ? formData.kota.toUpperCase() : "JAWA TENGAH"}, {formData.tanggal}</p>
+                  <p>Wajib Retribusi</p>
+                  <div className="ttd-space-jtg flex items-center justify-center">
+                    {formData.ttdUrl ? (
+                      <img src={formData.ttdUrl} alt="Tanda Tangan" className="max-h-full object-contain" />
+                    ) : null}
                   </div>
+                  <p className="font-bold underline">{formData.nama}</p>
                 </div>
 
-                <div className="footer-note">
+                {/* <div className="footer-note">
                   <span>*Coret yang tidak perlu</span>
-                </div>
+                </div> */}
               </div>
 
               {/* LEMBAR 2: LAMPIRAN FOTO/PDF KTP */}
