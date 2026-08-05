@@ -158,7 +158,7 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
   return (
     <div className="w-full">
       {/* PANEL TOOLS MIGRASI SMART */}
-      <div className="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-200 flex items-center justify-between">
+      {/* <div className="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-200 flex items-center justify-between">
         <div>
            <h3 className="font-bold text-sm flex items-center gap-2">
              <Database className="w-4 h-4 text-indigo-600" />
@@ -175,7 +175,7 @@ export default function ProductGrid({ filters = {}, searchTerm = "" }) {
         >
           {isMigrating ? "Memproses Data..." : "Mulai Migrasi 21.402 Data"}
         </button>
-      </div>
+      </div> */}
 
       {/* INFO PANEL */}
       <div className="flex justify-between items-center mb-6">
