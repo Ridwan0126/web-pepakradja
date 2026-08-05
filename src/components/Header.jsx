@@ -34,7 +34,7 @@ export default function Header() {
   // =========================
   const searchRef = useRef(null);
   const profileRef = useRef(null);
-  const notifRef = useRef(null); // <-- Ref baru untuk dropdown notifikasi
+  const notifRef = useRef(null);
 
   // =========================
   // STATE
@@ -54,7 +54,7 @@ export default function Header() {
 
   // PROFILE & NOTIFICATION
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false); // <-- State untuk buka/tutup dropdown notif
+  const [notifOpen, setNotifOpen] = useState(false);
 
   // DETAIL
   const [selectedDetail, setSelectedDetail] = useState(null);
@@ -66,7 +66,6 @@ export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Dummy Data Notifikasi
   const notifications = [
     {
       id: 1,
@@ -106,9 +105,6 @@ export default function Header() {
     },
   ];
 
-  // =========================
-  // CHECK SESSION
-  // =========================
   useEffect(() => {
     checkSession();
   }, []);
@@ -146,22 +142,14 @@ export default function Header() {
     }
   };
 
-  // =========================
-  // CLICK OUTSIDE
-  // =========================
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // SEARCH
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setSearchOpen(false);
       }
-
-      // PROFILE
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
-
-      // NOTIFICATION (Click Outside handler)
       if (notifRef.current && !notifRef.current.contains(event.target)) {
         setNotifOpen(false);
       }
@@ -173,9 +161,6 @@ export default function Header() {
     };
   }, []);
 
-  // =========================
-  // LOGOUT
-  // =========================
   const handleLogout = () => {
     localStorage.removeItem("wr_session");
     localStorage.removeItem("wr_user_header");
@@ -186,9 +171,6 @@ export default function Header() {
     setMobileMenuOpen(false);
   };
 
-  // =========================
-  // AUTO SEARCH
-  // =========================
   useEffect(() => {
     const debounce = setTimeout(() => {
       if (search.trim()) {
@@ -202,9 +184,6 @@ export default function Header() {
     return () => clearTimeout(debounce);
   }, [search]);
 
-  // =========================
-  // GET ALL PHOTOS
-  // =========================
   const getAllPhotos = (item) => {
     const photos = [];
     if (item?.foto) photos.push(item.foto);
@@ -214,13 +193,10 @@ export default function Header() {
     return [...new Set(photos)];
   };
 
-  // =========================
-  // SEARCH API
-  // =========================
   const handleSearch = async (
     keywordSearch = search,
     pageNumber = 1,
-    isLoadMore = false,
+    isLoadMore = false
   ) => {
     try {
       const keyword = keywordSearch.toLowerCase().trim();
@@ -238,7 +214,9 @@ export default function Header() {
       setSearchOpen(true);
 
       const response = await fetch(
-        `https://rpp.bapenda.jatengprov.go.id/penatausahaan/api/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(keyword)}`,
+        `https://rpp.bapenda.jatengprov.go.id/penatausahaan/api/pepakraja/obyek?page=${pageNumber}&limit=20&search=${encodeURIComponent(
+          keyword
+        )}`
       );
 
       const result = await response.json();
@@ -265,9 +243,6 @@ export default function Header() {
     handleSearch(lastSearch, nextPage, true);
   };
 
-  // =========================
-  // MENU DATA
-  // =========================
   const menuData = {
     home: {
       categories: {
@@ -465,7 +440,7 @@ export default function Header() {
                                     >
                                       {item}
                                     </button>
-                                  ),
+                                  )
                                 )}
                               </div>
                             )}
@@ -512,10 +487,10 @@ export default function Header() {
                   </div>
                 </div>
 
-                {/* SISI TENGAH (INPUT FORM SEARCH BAR) */}
-                <div ref={searchRef} className="hidden lg:flex flex-1 relative">
+                {/* SISI TENGAH (INPUT FORM SEARCH BAR - Diubah agar tampil juga di Mobile/Tablet) */}
+                <div ref={searchRef} className="flex flex-1 relative max-w-md mx-2">
                   <div className="relative w-full">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
+                    <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
                     <input
                       type="text"
                       value={search}
@@ -526,15 +501,15 @@ export default function Header() {
                           setSearchOpen(true);
                         }
                       }}
-                      placeholder="Cari layanan atau retribusi..."
-                      className="w-full pl-12 pr-32 py-2.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100/80 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      placeholder="Cari layanan/retribusi..."
+                      className="w-full pl-9 sm:pl-12 pr-20 sm:pr-32 py-2 sm:py-2.5 text-xs sm:text-sm rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100/80 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     />
                     <button
                       onClick={() => {
                         setShowCategory(false);
                         handleSearch(search);
                       }}
-                      className="absolute right-12 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-600 text-xs sm:text-sm font-semibold transition-all duration-200 z-10"
+                      className="absolute right-10 sm:right-12 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-600 text-xs sm:text-sm font-semibold transition-all duration-200 z-10"
                     >
                       Cari
                     </button>
@@ -547,7 +522,7 @@ export default function Header() {
                           setSearchOpen(false);
                           setSelectedDetail(null);
                         }}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-slate-400 hover:text-slate-600 transition-all duration-200"
+                        className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-10 text-slate-400 hover:text-slate-600 transition-all duration-200"
                       >
                         <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
@@ -555,33 +530,31 @@ export default function Header() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-3">
+                {/* SISI KANAN (LOGIN/REGISTER ATAU PROFILE/NOTIF) */}
+                <div className="flex items-center gap-2">
                   {isAuthenticated ? (
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2">
                       {/* PROFILE AREA */}
-                      <div
-                        ref={profileRef}
-                        className="relative hidden md:block"
-                      >
+                      <div ref={profileRef} className="relative">
                         <button
                           onClick={() => {
                             setShowCategory(false);
-                            setNotifOpen(false); // Menutup notif jika profil dibuka
+                            setNotifOpen(false);
                             setProfileOpen(!profileOpen);
                           }}
-                          className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 rounded-lg md:rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all duration-200"
+                          className="flex items-center gap-2 px-2.5 sm:px-4 py-2 rounded-lg md:rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all duration-200"
                         >
-                          <div className="w-8 md:w-10 h-8 md:h-10 rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs md:text-sm shadow-sm">
+                          <div className="w-7 h-7 sm:w-8 md:h-10 rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
                             {user?.nama?.charAt(0) || "U"}
                           </div>
-                          <div className="text-left hidden sm:block">
+                          <div className="text-left hidden md:block">
                             <p className="font-semibold text-xs md:text-sm text-slate-800">
                               {user?.nama || "User"}
                             </p>
                             <p className="text-xs text-slate-400">Profile</p>
                           </div>
                           <ChevronDown
-                            className={`w-3.5 md:w-4 h-3.5 md:h-4 text-slate-400 transition-all duration-200 ${
+                            className={`w-3.5 h-3.5 text-slate-400 transition-all duration-200 ${
                               profileOpen ? "rotate-180" : ""
                             }`}
                           />
@@ -594,11 +567,11 @@ export default function Header() {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 8 }}
                               transition={{ duration: 0.2 }}
-                              className="absolute right-0 mt-3 w-64 rounded-2xl border border-white/50 bg-white/70 backdrop-blur-xl shadow-2xl overflow-hidden z-[99999]"
+                              className="absolute right-0 mt-3 w-64 rounded-2xl border border-white/50 bg-white/90 backdrop-blur-xl shadow-2xl overflow-hidden z-[99999]"
                             >
-                              <div className="p-4 md:p-5 border-b border-gray-200/30 bg-white/30">
+                              <div className="p-4 border-b border-gray-200/30 bg-white/30">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 md:w-12 h-10 md:h-12 rounded-lg md:rounded-2xl bg-gradient-to-br from-blue-400 to-purple-500 text-white flex items-center justify-center font-bold text-sm md:text-base">
+                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 text-white flex items-center justify-center font-bold">
                                     {user?.nama?.charAt(0) || "U"}
                                   </div>
                                   <div>
@@ -612,7 +585,7 @@ export default function Header() {
                                 </div>
                               </div>
 
-                              <div className="p-2 space-y-1 bg-white/20">
+                              <div className="p-2 space-y-1">
                                 <button
                                   onClick={() => {
                                     navigate("/profile");
@@ -631,11 +604,8 @@ export default function Header() {
                                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-900/5 text-slate-700 transition-colors text-xs font-bold"
                                 >
                                   <KeyRound className="w-4 h-4 text-slate-400" />
-                                  <span className="text-sm">
-                                    Ganti Password
-                                  </span>
+                                  <span className="text-sm">Ganti Password</span>
                                 </button>
-
                                 <button
                                   onClick={handleLogout}
                                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 text-red-600 transition-colors text-xs font-bold"
@@ -649,22 +619,22 @@ export default function Header() {
                         </AnimatePresence>
                       </div>
 
-                      {/* PERBAIKAN: DROPDOWN NOTIFIKASI */}
+                      {/* NOTIFICATION */}
                       <div ref={notifRef} className="relative">
                         <button
                           onClick={() => {
                             setShowCategory(false);
-                            setProfileOpen(false); // Menutup profil jika notif dibuka
+                            setProfileOpen(false);
                             setNotifOpen(!notifOpen);
                           }}
-                          className={`relative p-2.5 rounded-lg md:rounded-2xl border border-gray-200 transition-all duration-200 shadow-sm group ${
+                          className={`relative p-2.5 rounded-lg md:rounded-2xl border border-gray-200 transition-all duration-200 shadow-sm ${
                             notifOpen
                               ? "bg-blue-50 text-blue-600 border-blue-200"
                               : "bg-gray-50 hover:bg-gray-100 text-slate-700"
                           }`}
                           title="Notifikasi"
                         >
-                          <Bell className="w-5 h-5 transition-transform duration-200 group-hover:rotate-12" />
+                          <Bell className="w-5 h-5" />
                           <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white animate-pulse" />
                         </button>
 
@@ -675,7 +645,7 @@ export default function Header() {
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: 8, scale: 0.95 }}
                               transition={{ duration: 0.2, ease: "easeOut" }}
-                              className="absolute right-0 mt-3 w-[320px] sm:w-[360px] rounded-2xl border border-white/50 bg-white/80 backdrop-blur-xl shadow-2xl overflow-hidden z-[99999]"
+                              className="absolute right-0 mt-3 w-[300px] sm:w-[360px] rounded-2xl border border-white/50 bg-white/90 backdrop-blur-xl shadow-2xl overflow-hidden z-[99999]"
                             >
                               <div className="px-4 py-3 border-b border-gray-200/30 bg-white/40 flex justify-between items-center">
                                 <h3 className="font-extrabold text-xs text-slate-900 tracking-wider uppercase">
@@ -686,7 +656,7 @@ export default function Header() {
                                 </span>
                               </div>
 
-                              <div className="max-h-[350px] overflow-y-auto divide-y divide-gray-100/50 bg-white/20">
+                              <div className="max-h-[350px] overflow-y-auto divide-y divide-gray-100/50">
                                 {notifications.map((notif) => (
                                   <div
                                     key={notif.id}
@@ -704,7 +674,7 @@ export default function Header() {
                                       <p className="text-[11px] text-slate-500 leading-normal mt-0.5 font-medium line-clamp-2">
                                         {notif.desc}
                                       </p>
-                                      <span className="text-[9px] text-slate-400 font-bold block mt-1 tracking-wide uppercase">
+                                      <span className="text-[9px] text-slate-400 font-bold block mt-1 uppercase">
                                         {notif.time}
                                       </span>
                                     </div>
@@ -729,18 +699,19 @@ export default function Header() {
                       </div>
                     </div>
                   ) : (
-                    <div className="hidden md:flex gap-2">
+                    /* Tombol Masuk/Daftar diubah agar selalu tampil di semua ukuran layar (menghapus kelas `hidden md:flex`) */
+                    <div className="flex gap-1.5 sm:gap-2">
                       <Link
                         to="/login"
                         onClick={() => setShowCategory(false)}
-                        className="px-4 md:px-5 py-2 md:py-3 rounded-lg md:rounded-2xl border border-gray-200 bg-gray-50 text-slate-700 hover:bg-gray-100 transition-all duration-200 font-semibold text-sm shadow-sm"
+                        className="px-3 sm:px-4 py-2 rounded-lg md:rounded-2xl border border-gray-200 bg-gray-50 text-slate-700 hover:bg-gray-100 transition-all duration-200 font-semibold text-xs sm:text-sm shadow-sm"
                       >
                         Masuk
                       </Link>
                       <Link
                         to="/register"
                         onClick={() => setShowCategory(false)}
-                        className="px-4 md:px-5 py-2 md:py-3 rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 font-semibold text-sm"
+                        className="px-3 sm:px-4 py-2 rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-200 font-semibold text-xs sm:text-sm"
                       >
                         Daftar
                       </Link>
@@ -750,7 +721,6 @@ export default function Header() {
               </div>
             </div>
           </header>
-
           {/* MOBILE TOGGLE DRAWER DROPDOWN */}
           <AnimatePresence>
             {mobileMenuOpen && (
